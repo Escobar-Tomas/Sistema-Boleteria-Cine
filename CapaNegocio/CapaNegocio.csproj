@@ -9,7 +9,6 @@
   <ItemGroup>
     <ProjectReference Include="..\CapaDatos\CapaDatos\CapaDatos.csproj" />
     <ProjectReference Include="..\CapaEntidad\CapaEntidad.csproj" />
-    <ProjectReference Include="..\CapaServicios\CapaServicios.csproj" />
   </ItemGroup>
 
 </Project>
