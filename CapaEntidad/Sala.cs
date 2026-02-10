@@ -1,22 +1,23 @@
-﻿using System;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CapaEntidad
 {
-    internal class Sala
+    public class Sala
     {
-        private int IdSala { get; set; }
-        private string Nombre { get; set; }
-        private int Capacidad { get; set; }
+        [Key]
+        public int Id { get; set; }
 
-        public Sala(int _IdSala, string _Nombre, int _Capacidad)
-        {
-            IdSala = _IdSala;
-            Nombre = _Nombre;
-            Capacidad = _Capacidad;
-        }
+        [Required]
+        [StringLength(50)]
+        public string Nombre { get; set; } // Ej: "Sala 1", "Sala IMAX"
+
+        [Required]
+        public int Capacidad { get; set; } // Ej: 50, 100 butacas
+
+        public bool Estado { get; set; } = true;
+
+        // Relación: Una sala tiene muchas funciones
+        public virtual ICollection<Funcion> Funciones { get; set; }
     }
 }

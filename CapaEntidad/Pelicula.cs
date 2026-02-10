@@ -1,32 +1,33 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace CapaEntidad
 {
-    internal class Pelicula
+    public class Pelicula
     {
-        private int IdPelicula { get; set; }
-        private string Titulo { get; set; }
-        private string Genero { get; set; }
-        private int Duracion { get; set; } // Duracion en minutos
-        private string Director { get; set; }
-        private string Clasificacion { get; set; }
-        private DateTime FechaEstreno { get; set; }
-        private string Descripcion { get; set; }
+        [Key]
+        public int Id { get; set; }
 
-        public Pelicula(int _IdPelicula, string _Titulo, string _Genero, int _Duracion, string _Director, string _Clasificacion, DateTime _FechaEstreno, string _Descripcion)
-        {
-            IdPelicula = _IdPelicula;
-            Titulo = _Titulo;
-            Genero = _Genero;
-            Duracion = _Duracion;
-            Director = _Director;
-            Clasificacion = _Clasificacion;
-            FechaEstreno = _FechaEstreno;
-            Descripcion = _Descripcion;
-        }
+        [Required]
+        [StringLength(100)]
+        public string Titulo { get; set; }
+
+        // CAMBIADO: De 'Descripcion' a 'Sinopsis' para coincidir con tu error
+        public string Sinopsis { get; set; }
+
+        public string Director { get; set; }
+        public string Genero { get; set; }
+        public int DuracionMinutos { get; set; }
+
+        // CAMBIADO: De 'ImagenPortada' a 'PosterUrl'
+        public string PosterUrl { get; set; }
+
+        // CAMBIADO: De 'IdTMDB' a 'TmdbId' (Notación PascalCase estándar)
+        public int TmdbId { get; set; }
+
+        // CAMBIADO: Agregamos esta propiedad que te falta en el error
+        public bool EstaEnCartelera { get; set; } = true;
+
+        public virtual ICollection<Funcion> Funciones { get; set; }
     }
 }

@@ -10,16 +10,17 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace CapaPresentacion_WPF
+namespace CapaPresentacion_WPF.Vistas
 {
     /// <summary>
-    /// Lógica de interacción para Login.xaml
+    /// Lógica de interacción para VistaFunciones.xaml
     /// </summary>
-    public partial class Login : Window
+    public partial class VistaFunciones : UserControl
     {
-        public Login()
+        public VistaFunciones()
         {
             InitializeComponent();
         }

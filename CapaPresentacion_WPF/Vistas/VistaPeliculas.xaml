@@ -1,0 +1,57 @@
+﻿<UserControl x:Class="CapaPresentacion_WPF.Vistas.VistaPeliculas"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="900" Background="White">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </UserControl.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Padding="15" Background="#F8F9FA" CornerRadius="8" Margin="0,0,0,20">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Buscar en TMDB:" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,10,0"/>
+
+                <TextBox Text="{Binding TextoBusqueda, UpdateSourceTrigger=PropertyChanged}" Width="300" Padding="5"/>
+
+                <Button Content="Buscar" Command="{Binding BuscarCommand}" 
+                        Margin="10,0,0,0" Padding="15,5" Background="#007ACC" Foreground="White"/>
+
+                <ProgressBar IsIndeterminate="True" Width="100" Height="15" Margin="20,0,0,0"
+                             Visibility="{Binding EstaBuscando, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+            </StackPanel>
+        </Border>
+
+        <ListView Grid.Row="1" ItemsSource="{Binding Resultados}" SelectedItem="{Binding PeliculaSeleccionada}" BorderThickness="0">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="60"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Image Grid.Column="0" Source="{Binding FullPosterUrl}" Height="80"/>
+                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Titulo}" FontWeight="Bold" FontSize="14"/>
+                            <TextBlock Text="{Binding FechaLanzamiento}" Foreground="Gray"/>
+                        </StackPanel>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <StackPanel Grid.Row="2" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="Guardar en Base de Datos" Command="{Binding GuardarCommand}"
+                    Padding="20,10" Background="#28a745" Foreground="White" FontWeight="Bold"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
