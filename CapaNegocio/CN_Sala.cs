@@ -1,21 +1,17 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using CapaDatos;
+﻿using CapaDatos;
 using CapaEntidad;
-using Microsoft.EntityFrameworkCore;
+using CapaNegocio.Interfaces; 
+using System;
 
 namespace CapaNegocio
 {
-    public class CN_Sala
+    public class CN_Sala : ICN_Sala
     {
         private readonly BDContexto _db;
 
-        public CN_Sala(string cadenaConexion)
+        public CN_Sala(BDContexto db)
         {
-            var optionsBuilder = new DbContextOptionsBuilder<BDContexto>();
-            optionsBuilder.UseSqlServer(cadenaConexion);
-
-            _db = new BDContexto(optionsBuilder.Options);
+            _db = db;
         }
 
         public List<Sala> Listar()

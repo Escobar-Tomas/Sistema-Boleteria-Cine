@@ -3,57 +3,202 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:CapaPresentacion_WPF.ViewModels"
         xmlns:vistas="clr-namespace:CapaPresentacion_WPF.Vistas"
-        Title="Cine System" Height="700" Width="1100"
-        WindowStartupLocation="CenterScreen" WindowState="Maximized">
+        Title="Cine System" Height="768" Width="1366"
+        WindowStartupLocation="CenterScreen" WindowState="Maximized"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent">
 
     <Window.Resources>
         <DataTemplate DataType="{x:Type vm:BuscadorPeliculasViewModel}">
             <vistas:VistaPeliculas/>
         </DataTemplate>
-
         <DataTemplate DataType="{x:Type vm:GestionSalasViewModel}">
             <vistas:VistaSalas/>
         </DataTemplate>
-
         <DataTemplate DataType="{x:Type vm:GestionFuncionesViewModel}">
             <vistas:VistaFunciones/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:VentasViewModel}">
+            <vistas:VistaVentas/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:GestionUsuariosViewModel}">
+            <vistas:VistaUsuarios/>
+        </DataTemplate>
 
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <Style x:Key="MenuButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#BDC3C7"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Height" Value="50"/>
+            <Setter Property="Margin" Value="0,5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="8" Padding="15,0">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#34495E"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ControlButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#7F8C8D"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="45"/>
+            <Setter Property="Height" Value="35"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#ECF0F1"/>
+                    <Setter Property="Foreground" Value="#2C3E50"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
 
-    <Grid Background="#F0F2F5">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+    <Border Background="#F0F2F5">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="260"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Background="#2C3E50">
-            <StackPanel Margin="15">
-                <TextBlock Text="CINE SYSTEM" Foreground="White" FontSize="22" FontWeight="Bold" Margin="0,0,0,30" HorizontalAlignment="Center"/>
+            <Border Grid.Column="0" Background="#2C3E50">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-                <TextBlock Text="{Binding NombreUsuario}" Foreground="#BDC3C7" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                <TextBlock Text="{Binding RolUsuario}" Foreground="#95A5A6" FontSize="12" HorizontalAlignment="Center" Margin="0,0,0,30"/>
+                    <StackPanel Grid.Row="0" Margin="0,20,0,40">
+                        <Border Width="70" Height="70" CornerRadius="35" Background="#34495E" Margin="0,0,0,15">
+                            <TextBlock Text="👤" FontSize="35" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="{Binding NombreUsuario}" Foreground="White" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding RolUsuario}" Foreground="#95A5A6" FontSize="13" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                    </StackPanel>
 
-                <Button Content="🎬  Gestión Películas" Command="{Binding MostrarPeliculasCommand}"
-                        Height="45" Background="#34495E" Foreground="White" BorderThickness="0" Margin="0,5" HorizontalContentAlignment="Left" Padding="15,0"/>
+                    <StackPanel Grid.Row="1">
+                        <TextBlock Text="MENÚ PRINCIPAL" Foreground="#7F8C8D" FontSize="11" FontWeight="Bold" Margin="10,0,0,10"/>
 
-                <Button Content="🎟️  Ventas (Pronto)" 
-                        Height="45" Background="#34495E" Foreground="#7F8C8D" BorderThickness="0" Margin="0,5" HorizontalContentAlignment="Left" Padding="15,0"/>
-                
-                <Button Content="🏢  Gestión Salas" Command="{Binding MostrarSalasCommand}"
-                    Height="45" Background="#34495E" Foreground="White" BorderThickness="0" Margin="0,5" HorizontalContentAlignment="Left" Padding="15,0"/>
-                
-                <Button Content="🏢  Gestión Funciones" Command="{Binding MostrarFuncionesCommand}"
-                    Height="45" Background="#34495E" Foreground="White" BorderThickness="0" Margin="0,5" HorizontalContentAlignment="Left" Padding="15,0"/>
+                        <Button Style="{StaticResource MenuButtonStyle}" Command="{Binding MostrarVentasCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🎟️" Margin="0,0,15,0"/>
+                                <TextBlock Text="Ventas POS"/>
+                            </StackPanel>
+                        </Button>
 
-                <Button Content="🚪  Cerrar Sesión" Click="BtnLogout_Click"
-                        Height="45" Background="#E74C3C" Foreground="White" BorderThickness="0"/>
+                        <Button Style="{StaticResource MenuButtonStyle}" 
+                                Command="{Binding MostrarPeliculasCommand}"
+                                Visibility="{Binding EsAdministrador, Converter={StaticResource BoolToVis}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🎬" Margin="0,0,15,0"/>
+                                <TextBlock Text="Películas"/>
+                            </StackPanel>
+                        </Button>
 
-            </StackPanel>
-        </Border>
+                        <Button Style="{StaticResource MenuButtonStyle}" 
+                                Command="{Binding MostrarSalasCommand}"
+                                Visibility="{Binding EsAdministrador, Converter={StaticResource BoolToVis}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🏢" Margin="0,0,15,0"/>
+                                <TextBlock Text="Salas"/>
+                            </StackPanel>
+                        </Button>
 
-        <Border Grid.Column="1" Margin="20" Background="White" CornerRadius="10" ClipToBounds="True">
-            <ContentControl Content="{Binding VistaActual}"/>
-        </Border>
-    </Grid>
+                        <Button Style="{StaticResource MenuButtonStyle}" 
+                                Command="{Binding MostrarFuncionesCommand}"
+                                Visibility="{Binding EsAdministrador, Converter={StaticResource BoolToVis}}"
+                                >
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🕒" Margin="0,0,15,0"/>
+                                <TextBlock Text="Funciones"/>
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource MenuButtonStyle}" 
+                                Command="{Binding MostrarUsuariosCommand}"
+                                Visibility="{Binding EsAdministrador, Converter={StaticResource BoolToVis}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="👥" Margin="0,0,15,0"/>
+                                <TextBlock Text="Usuarios"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <Button Grid.Row="2" Click="BtnLogout_Click" Height="45" Background="#E74C3C" BorderThickness="0" Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <TextBlock Text="🚪" Foreground="White" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Cerrar Sesión" Foreground="White" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="45"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="White" MouseDown="TopBar_MouseDown">
+                    <Grid>
+                        <TextBlock Text="CINE SYSTEM MANAGER" VerticalAlignment="Center" Margin="20,0" FontWeight="Bold" Foreground="#2C3E50" FontSize="16"/>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="─" Style="{StaticResource ControlButtonStyle}" Click="BtnMinimize_Click"/>
+
+                            <Button Content="✕" Click="BtnClose_Click">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ControlButtonStyle}">
+                                        <Setter Property="Foreground" Value="#E74C3C"/>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter Property="Background" Value="#E74C3C"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="1" Margin="20" Background="White" CornerRadius="8">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="10" Direction="270" ShadowDepth="2" Color="#EAEAEA"/>
+                    </Border.Effect>
+                    <ContentControl Content="{Binding VistaActual}" ClipToBounds="True"/>
+                </Border>
+            </Grid>
+        </Grid>
+    </Border>
 </Window>

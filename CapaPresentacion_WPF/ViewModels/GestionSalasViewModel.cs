@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CapaNegocio;
+using CapaNegocio.Interfaces; // Asegúrate de incluir la carpeta de interfaces
 using CapaEntidad;
 using System.Collections.ObjectModel;
 using System.Windows;
@@ -9,7 +9,8 @@ namespace CapaPresentacion_WPF.ViewModels
 {
     public partial class GestionSalasViewModel : ObservableObject
     {
-        private CN_Sala _negocio = new CN_Sala(App.CadenaConexion);
+        // Usamos la interfaz en lugar de la clase concreta
+        private readonly ICN_Sala _negocio;
 
         // Colección enlazada a la DataGrid
         public ObservableCollection<Sala> ListaSalas { get; set; } = new ObservableCollection<Sala>();
@@ -24,8 +25,10 @@ namespace CapaPresentacion_WPF.ViewModels
         [ObservableProperty]
         private Sala salaSeleccionada;
 
-        public GestionSalasViewModel()
+        // CAMBIO: Inyectamos la dependencia a través del constructor
+        public GestionSalasViewModel(ICN_Sala negocio)
         {
+            _negocio = negocio;
             CargarSalas();
         }
 

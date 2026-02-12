@@ -1,70 +1,131 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CapaNegocio;
+using CapaNegocio.Interfaces;
+using CapaEntidad;
 using CapaNegocio.ModelosAPI;
 using System.Collections.ObjectModel;
-using System.Windows;
 using System.Threading.Tasks;
+using System.Windows;
+using System;
 
 namespace CapaPresentacion_WPF.ViewModels
 {
     public partial class BuscadorPeliculasViewModel : ObservableObject
     {
-        // Referencia a nuestra lógica de negocio
-        private readonly CN_Pelicula _cnPelicula;
+        private readonly ICN_Pelicula _negocioPelicula;
 
-        // Propiedades enlazadas a la Vista (Binding)
-        [ObservableProperty]
-        private string textoBusqueda;
+        // Colecciones
+        public ObservableCollection<PeliculaBusqueda> ResultadosBusqueda { get; set; } = new ObservableCollection<PeliculaBusqueda>();
+        public ObservableCollection<Pelicula> PeliculasLocales { get; set; } = new ObservableCollection<Pelicula>();
 
-        [ObservableProperty]
-        private bool estaBuscando; // Para mostrar una barrita de carga
+        // Propiedades para Búsqueda
+        [ObservableProperty] private string textoBusqueda;
+        [ObservableProperty] private bool estaCargando;
 
-        // Usamos ObservableCollection para que la lista en pantalla se actualice sola
-        public ObservableCollection<PeliculaBusqueda> Resultados { get; set; } = new ObservableCollection<PeliculaBusqueda>();
+        // Propiedad para Edición (La película seleccionada en la lista local)
+        [ObservableProperty] private Pelicula peliculaSeleccionada;
 
-        [ObservableProperty]
-        private PeliculaBusqueda peliculaSeleccionada;
-
-        // Constructor: Recibimos la lógica de negocio ya configurada
-        public BuscadorPeliculasViewModel(CN_Pelicula cnPelicula)
+        public BuscadorPeliculasViewModel(ICN_Pelicula negocioPelicula)
         {
-            _cnPelicula = cnPelicula;
+            _negocioPelicula = negocioPelicula;
         }
 
-        // COMANDO: Buscar Película
+        // --- COMANDOS ---
+
+        [RelayCommand]
+        public async Task CargarInicio()
+        {
+            await CargarPeliculasLocales();
+        }
+
+        private async Task CargarPeliculasLocales()
+        {
+            try
+            {
+                EstaCargando = true;
+                var lista = await _negocioPelicula.ListarAsync();
+                PeliculasLocales.Clear();
+                foreach (var p in lista) PeliculasLocales.Add(p);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar: {ex.Message}");
+            }
+            finally { EstaCargando = false; }
+        }
+
+        // Búsqueda en API (Tu código existente)
         [RelayCommand]
         public async Task Buscar()
         {
             if (string.IsNullOrWhiteSpace(TextoBusqueda)) return;
-
-            EstaBuscando = true;
-            Resultados.Clear();
-
-            var lista = await _cnPelicula.BuscarPeliculasEnTMDB(TextoBusqueda);
-
-            foreach (var item in lista)
+            EstaCargando = true;
+            try
             {
-                Resultados.Add(item);
+                var resultados = await _negocioPelicula.BuscarPeliculasEnTMDBAsync(TextoBusqueda);
+                ResultadosBusqueda.Clear();
+                foreach (var r in resultados) ResultadosBusqueda.Add(r);
+                if (resultados.Count == 0) MessageBox.Show("No se encontraron resultados.");
             }
-
-            EstaBuscando = false;
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error TMDB: {ex.Message}");
+            }
+            finally { EstaCargando = false; }
         }
 
-        // COMANDO: Guardar Película Seleccionada en BD
+        // Importar desde API (Tu código existente)
         [RelayCommand]
-        public async Task Guardar()
+        public async Task AgregarPelicula(PeliculaBusqueda peliculaApi)
+        {
+            if (peliculaApi == null) return;
+            EstaCargando = true;
+            try
+            {
+                string msj = await _negocioPelicula.GuardarPeliculaDesdeApiAsync(peliculaApi.Id);
+                MessageBox.Show(msj);
+                await CargarPeliculasLocales(); // Refrescar lista local
+            }
+            catch (Exception ex) { MessageBox.Show($"Error: {ex.Message}"); }
+            finally { EstaCargando = false; }
+        }
+
+        // --- NUEVOS COMANDOS DE GESTIÓN ---
+
+        [RelayCommand]
+        public async Task GuardarEdicion()
         {
             if (PeliculaSeleccionada == null) return;
 
-            EstaBuscando = true; // Reusamos el indicador de carga
+            try
+            {
+                await _negocioPelicula.EditarAsync(PeliculaSeleccionada);
+                MessageBox.Show("Película actualizada correctamente.");
+                await CargarPeliculasLocales();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al editar: {ex.Message}");
+            }
+        }
 
-            // Llamamos al método que creamos en la CapaNegocio que descarga detalles y guarda
-            string mensaje = await _cnPelicula.GuardarPeliculaDesdeApi(PeliculaSeleccionada.Id);
+        [RelayCommand]
+        public async Task EliminarPelicula(Pelicula pelicula)
+        {
+            if (pelicula == null) return;
 
-            MessageBox.Show(mensaje);
+            var result = MessageBox.Show($"¿Estás seguro de eliminar '{pelicula.Titulo}'?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (result != MessageBoxResult.Yes) return;
 
-            EstaBuscando = false;
+            try
+            {
+                await _negocioPelicula.EliminarAsync(pelicula.Id); // Asumiendo que Id es la PK
+                await CargarPeliculasLocales();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al eliminar: {ex.Message}");
+            }
         }
     }
 }

@@ -1,36 +1,30 @@
 ﻿using System.Linq;
 using CapaDatos;
 using CapaEntidad;
-using Microsoft.EntityFrameworkCore; // Necesario para .FirstOrDefault
+using CapaNegocio.Interfaces;
 
 namespace CapaNegocio
 {
-    public class CN_Usuario
+    public class CN_Usuario : ICN_Usuario
     {
         private readonly BDContexto _db;
 
-        // CAMBIO: Constructor recibe la cadena
-        public CN_Usuario(string cadenaConexion)
+        // Inyectamos el contexto de base de datos
+        public CN_Usuario(BDContexto db)
         {
-            var optionsBuilder = new DbContextOptionsBuilder<BDContexto>();
-            optionsBuilder.UseSqlServer(cadenaConexion);
-
-            _db = new BDContexto(optionsBuilder.Options);
+            _db = db;
         }
 
         public Usuario Login(string correo, string clave)
         {
-            // 1. Encriptamos la clave que escribió el usuario para compararla
             string claveEncriptada = CN_Recursos.ConvertirSha256(clave);
 
-            // 2. Buscamos en la BD
             return _db.Usuarios
                 .FirstOrDefault(u => u.Correo == correo &&
                                      u.Clave == claveEncriptada &&
                                      u.Estado == true);
         }
 
-        // Método auxiliar para crear el primer usuario (Admin)
         public string Registrar(Usuario obj, string claveTextoPlano)
         {
             try
@@ -41,6 +35,49 @@ namespace CapaNegocio
                 return "Usuario registrado";
             }
             catch (System.Exception ex) { return ex.Message; }
+        }
+
+        public List<Usuario> Listar()
+        {
+            // Traemos todos los usuarios
+            return _db.Usuarios.ToList();
+        }
+
+        public string Editar(Usuario obj, string claveTextoPlano = "")
+        {
+            try
+            {
+                var usuarioDb = _db.Usuarios.Find(obj.Id);
+                if (usuarioDb == null) return "Usuario no encontrado.";
+
+                // Actualizamos todos los datos básicos
+                usuarioDb.NombreCompleto = obj.NombreCompleto;
+                usuarioDb.Correo = obj.Correo;
+                usuarioDb.Rol = obj.Rol;
+                usuarioDb.Estado = obj.Estado;
+
+                // Solo actualizamos la clave si el administrador escribió una nueva
+                if (!string.IsNullOrWhiteSpace(claveTextoPlano))
+                {
+                    usuarioDb.Clave = CN_Recursos.ConvertirSha256(claveTextoPlano);
+                }
+
+                _db.SaveChanges();
+                return "Usuario actualizado correctamente.";
+            }
+            catch (System.Exception ex) { return "Error: " + ex.Message; }
+        }
+
+        public void Eliminar(int id)
+        {
+            var usuarioDb = _db.Usuarios.Find(id);
+            if (usuarioDb != null)
+            {
+                // En usuarios es mejor hacer un "Borrado Lógico" (darlo de baja)
+                // para no perder el historial de qué tickets vendió ese usuario.
+                usuarioDb.Estado = false;
+                _db.SaveChanges();
+            }
         }
     }
 }

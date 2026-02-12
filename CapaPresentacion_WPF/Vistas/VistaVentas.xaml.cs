@@ -1,6 +1,4 @@
-﻿using CapaPresentacion_WPF.ViewModels;
-using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,18 +16,13 @@ using System.Windows.Shapes;
 namespace CapaPresentacion_WPF.Vistas
 {
     /// <summary>
-    /// Lógica de interacción para VistaPeliculas.xaml
+    /// Lógica de interacción para VistaVentas.xaml
     /// </summary>
-    public partial class VistaPeliculas : UserControl
+    public partial class VistaVentas : UserControl
     {
-        public VistaPeliculas()
+        public VistaVentas()
         {
             InitializeComponent();
-
-            var viewModel = App.ServiceProvider.GetRequiredService<BuscadorPeliculasViewModel>();
-            DataContext = viewModel;
-
-            this.Loaded += async (s, e) => await viewModel.CargarInicioCommand.ExecuteAsync(null);
         }
     }
 }

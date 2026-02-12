@@ -4,47 +4,109 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="900" Background="White">
+             d:DesignHeight="600" d:DesignWidth="1000" Background="Transparent">
+
+    <UserControl.Resources>
+        <Style TargetType="TextBox" x:Key="InputStyle">
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#F5F6FA"/>
+            <Setter Property="BorderBrush" Value="#DCDDE1"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="{TemplateBinding BorderThickness}" 
+                                CornerRadius="5">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
 
     <Grid Margin="20">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="320"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Background="#F8F9FA" Padding="20" CornerRadius="8" VerticalAlignment="Top">
+        <Border Grid.Column="0" Background="White" CornerRadius="10" Margin="0,0,20,0" VerticalAlignment="Top" Padding="25">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="15" Direction="270" ShadowDepth="3" Color="#EAEAEA"/>
+            </Border.Effect>
+
             <StackPanel>
-                <TextBlock Text="🏢 Nueva Sala" FontSize="18" FontWeight="Bold" Margin="0,0,0,20" Foreground="#2C3E50"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,25">
+                    <TextBlock Text="🏢" FontSize="24" Margin="0,0,10,0"/>
+                    <TextBlock Text="Nueva Sala" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" VerticalAlignment="Center"/>
+                </StackPanel>
 
-                <TextBlock Text="Nombre de la Sala:" Foreground="Gray"/>
-                <TextBox Text="{Binding NombreSala}" Padding="8" Margin="0,5,0,15"/>
+                <TextBlock Text="Nombre de la Sala" Foreground="#7F8C8D" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBox Text="{Binding NombreSala}" Style="{StaticResource InputStyle}" Margin="0,0,0,20"/>
 
-                <TextBlock Text="Capacidad (Personas):" Foreground="Gray"/>
-                <TextBox Text="{Binding CapacidadSala}" Padding="8" Margin="0,5,0,20"/>
+                <TextBlock Text="Capacidad (Asientos)" Foreground="#7F8C8D" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <TextBox Text="{Binding CapacidadSala}" Style="{StaticResource InputStyle}" Margin="0,0,0,30"/>
 
-                <Button Content="Guardar Sala" Command="{Binding GuardarCommand}"
-                        Padding="10" Background="#007ACC" Foreground="White" FontWeight="Bold" BorderThickness="0" Cursor="Hand"/>
+                <Button Command="{Binding GuardarCommand}" Content="GUARDAR SALA" 
+                        Height="45" Background="#27AE60" Foreground="White" FontWeight="Bold" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#2ECC71"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
             </StackPanel>
         </Border>
 
-        <Border Grid.Column="1" Margin="20,0,0,0">
-            <DockPanel>
-                <TextBlock Text="Listado de Salas" DockPanel.Dock="Top" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,10"/>
+        <Border Grid.Column="1" Background="White" CornerRadius="10" Padding="20">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="15" Direction="270" ShadowDepth="3" Color="#EAEAEA"/>
+            </Border.Effect>
 
-                <DataGrid ItemsSource="{Binding ListaSalas}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
-                          HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="35" BorderBrush="#E0E0E0">
+            <DockPanel>
+                <TextBlock Text="Listado de Salas Disponibles" DockPanel.Dock="Top" 
+                           FontSize="18" FontWeight="Bold" Foreground="#34495E" Margin="10,0,0,20"/>
+
+                <DataGrid ItemsSource="{Binding ListaSalas}" AutoGenerateColumns="False" 
+                          CanUserAddRows="False" IsReadOnly="True" BorderThickness="0"
+                          GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F0F0F0" HeadersVisibility="Column" RowHeight="45" Background="White">
+
+                    <DataGrid.Resources>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="#95A5A6"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Padding" Value="10,0"/>
+                            <Setter Property="Height" Value="40"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                            <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                        </Style>
+                    </DataGrid.Resources>
+
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
-                        <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*"/>
-                        <DataGridTextColumn Header="Capacidad" Binding="{Binding Capacidad}" Width="100"/>
+                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="60"/>
+                        <DataGridTextColumn Header="Nombre de Sala" Binding="{Binding Nombre}" Width="*"/>
+                        <DataGridTextColumn Header="Capacidad" Binding="{Binding Capacidad}" Width="150"/>
 
                         <DataGridTemplateColumn Width="100">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Button Content="Eliminar" 
-                                            Command="{Binding DataContext.EliminarCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                    <Button Command="{Binding DataContext.EliminarCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
                                             CommandParameter="{Binding}"
-                                            Background="#E74C3C" Foreground="White" BorderThickness="0" Padding="5,0" Margin="2"/>
+                                            Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Eliminar Sala">
+                                        <TextBlock Text="🗑️" Foreground="#E74C3C" FontSize="16"/>
+                                    </Button>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

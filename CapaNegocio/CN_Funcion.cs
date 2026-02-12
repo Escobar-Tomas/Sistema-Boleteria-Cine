@@ -3,19 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using CapaDatos;
 using CapaEntidad;
+using CapaNegocio.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace CapaNegocio
 {
-    public class CN_Funcion
+    public class CN_Funcion : ICN_Funcion // Implementar interfaz
     {
         private readonly BDContexto _db;
 
-        public CN_Funcion(string cadenaConexion)
+        // CAMBIO: Recibimos el contexto ya creado por el contenedor
+        public CN_Funcion(BDContexto db)
         {
-            var optionsBuilder = new DbContextOptionsBuilder<BDContexto>();
-            optionsBuilder.UseSqlServer(cadenaConexion);
-            _db = new BDContexto(optionsBuilder.Options);
+            _db = db;
         }
 
         // Listar funciones incluyendo los datos de Pelicula y Sala (Include)

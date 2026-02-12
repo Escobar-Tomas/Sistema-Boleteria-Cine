@@ -1,57 +1,221 @@
 ﻿<UserControl x:Class="CapaPresentacion_WPF.Vistas.VistaPeliculas"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d"
-             d:DesignHeight="600" d:DesignWidth="900" Background="White">
+             xmlns:vm="clr-namespace:CapaPresentacion_WPF.ViewModels"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=vm:BuscadorPeliculasViewModel}"
+             d:DesignHeight="600" d:DesignWidth="1000" Background="Transparent">
 
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Padding="15" Background="#F8F9FA" CornerRadius="8" Margin="0,0,0,20">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Buscar en TMDB:" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,10,0"/>
+        <TextBlock Text="Catálogo de Películas" FontSize="22" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,20"/>
 
-                <TextBox Text="{Binding TextoBusqueda, UpdateSourceTrigger=PropertyChanged}" Width="300" Padding="5"/>
+        <ProgressBar IsIndeterminate="True" Height="2" VerticalAlignment="Top" Background="Transparent" Foreground="#3498DB"
+                     Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVis}}" Margin="0,-10,0,10"/>
 
-                <Button Content="Buscar" Command="{Binding BuscarCommand}" 
-                        Margin="10,0,0,0" Padding="15,5" Background="#007ACC" Foreground="White"/>
+        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+            <TabControl.Resources>
+                <Style TargetType="TabItem">
+                    <Setter Property="FontSize" Value="14"/>
+                    <Setter Property="FontWeight" Value="SemiBold"/>
+                    <Setter Property="Foreground" Value="#7F8C8D"/>
+                    <Setter Property="Padding" Value="15,10"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="TabItem">
+                                <Grid>
+                                    <Border x:Name="Border" BorderBrush="Transparent" BorderThickness="0,0,0,3" Margin="0,0,10,0">
+                                        <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header" Margin="10,5"/>
+                                    </Border>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Border" Property="BorderBrush" Value="#3498DB"/>
+                                        <Setter Property="Foreground" Value="#3498DB"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </TabControl.Resources>
 
-                <ProgressBar IsIndeterminate="True" Width="100" Height="15" Margin="20,0,0,0"
-                             Visibility="{Binding EstaBuscando, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-            </StackPanel>
-        </Border>
+            <TabItem Header="Mis Películas">
+                <Grid Margin="0,20,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
 
-        <ListView Grid.Row="1" ItemsSource="{Binding Resultados}" SelectedItem="{Binding PeliculaSeleccionada}" BorderThickness="0">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <Grid Margin="5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="60"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <Image Grid.Column="0" Source="{Binding FullPosterUrl}" Height="80"/>
-                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding Titulo}" FontWeight="Bold" FontSize="14"/>
-                            <TextBlock Text="{Binding FechaLanzamiento}" Foreground="Gray"/>
+                    <Border Grid.Column="0" Background="White" CornerRadius="10" Margin="0,0,20,0" Padding="10">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="10" Direction="270" Color="#EAEAEA" ShadowDepth="2"/>
+                        </Border.Effect>
+                        <DataGrid ItemsSource="{Binding PeliculasLocales}" SelectedItem="{Binding PeliculaSeleccionada}"
+                                  AutoGenerateColumns="False" IsReadOnly="True" BorderThickness="0"
+                                  GridLinesVisibility="Horizontal" RowHeight="35" Background="White">
+
+                            <DataGrid.Resources>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="#95A5A6"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="Padding" Value="10,0"/>
+                                    <Setter Property="Height" Value="35"/>
+                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                                    <Setter Property="BorderBrush" Value="#E0E0E0"/>
+                                </Style>
+                            </DataGrid.Resources>
+
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
+                                <DataGridTextColumn Header="Título" Binding="{Binding Titulo}" Width="*"/>
+                                <DataGridTextColumn Header="Duración" Binding="{Binding Duracion}" Width="80"/>
+                                <DataGridTemplateColumn Width="80">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="Eliminar" Background="Transparent" Foreground="#E74C3C" BorderThickness="0" Cursor="Hand"
+                                                    Command="{Binding DataContext.EliminarPeliculaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{TemplateBinding Background}">
+                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <Border Grid.Column="1" Background="White" CornerRadius="10" Padding="20">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="10" Direction="270" Color="#EAEAEA" ShadowDepth="2"/>
+                        </Border.Effect>
+                        <Grid>
+                            <StackPanel>
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding PeliculaSeleccionada}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
+
+                                <TextBlock Text="Editar Película" FontSize="16" FontWeight="Bold" Margin="0,0,0,15" Foreground="#2C3E50"/>
+
+                                <TextBlock Text="Título" Foreground="#7F8C8D" Margin="0,0,0,5"/>
+                                <TextBox Text="{Binding PeliculaSeleccionada.Titulo, UpdateSourceTrigger=PropertyChanged}" Padding="5" Margin="0,0,0,15"/>
+
+                                <TextBlock Text="Sinopsis" Foreground="#7F8C8D" Margin="0,0,0,5"/>
+                                <TextBox Text="{Binding PeliculaSeleccionada.Sinopsis, UpdateSourceTrigger=PropertyChanged}" 
+                                         TextWrapping="Wrap" Height="80" AcceptsReturn="True" Padding="5" Margin="0,0,0,15"/>
+
+                                <TextBlock Text="Duración (min)" Foreground="#7F8C8D" Margin="0,0,0,5"/>
+                                <TextBox Text="{Binding PeliculaSeleccionada.DuracionMinutos, UpdateSourceTrigger=PropertyChanged}" Padding="5" Margin="0,0,0,20"/>
+
+                                <Button Content="Guardar Cambios" Command="{Binding GuardarEdicionCommand}" 
+                                        Height="40" Background="#3498DB" Foreground="White" FontWeight="Bold" BorderThickness="0" Cursor="Hand">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </StackPanel>
+
+                            <TextBlock Text="Selecciona una película para ver detalles" Foreground="#BDC3C7" 
+                                       VerticalAlignment="Center" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding PeliculaSeleccionada}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Importar de Internet (TMDB)">
+                <Grid Margin="0,20,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Background="White" CornerRadius="25" Padding="5" Width="500" HorizontalAlignment="Left" Margin="0,0,0,20" BorderBrush="#E0E0E0" BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBox Text="{Binding TextoBusqueda, UpdateSourceTrigger=PropertyChanged}" Width="380" BorderThickness="0" VerticalContentAlignment="Center" Padding="15,10" Background="Transparent"/>
+
+                            <Button Content="Buscar" Command="{Binding BuscarCommand}" Width="100" Background="#2C3E50" Foreground="White" BorderThickness="0" Height="36" Cursor="Hand">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" CornerRadius="20">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
                         </StackPanel>
-                    </Grid>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+                    </Border>
 
-        <StackPanel Grid.Row="2" HorizontalAlignment="Right" Margin="0,20,0,0">
-            <Button Content="Guardar en Base de Datos" Command="{Binding GuardarCommand}"
-                    Padding="20,10" Background="#28a745" Foreground="White" FontWeight="Bold"/>
-        </StackPanel>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding ResultadosBusqueda}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" BorderThickness="0" Background="Transparent" RowHeight="90">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Póster" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Image Source="{Binding FullPosterUrl}" Height="80" Stretch="Uniform" Margin="5"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Título" Binding="{Binding Titulo}" Width="*" FontWeight="Bold"/>
+                            <DataGridTextColumn Header="Lanzamiento" Binding="{Binding FechaLanzamiento}" Width="120"/>
+                            <DataGridTemplateColumn Width="140">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="⬇ Importar" Command="{Binding DataContext.AgregarPeliculaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                                CommandParameter="{Binding}" Background="#27AE60" Foreground="White" FontWeight="Bold" BorderThickness="0" HorizontalAlignment="Center" Cursor="Hand" Margin="0">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}" CornerRadius="5" Padding="15,8">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </UserControl>
