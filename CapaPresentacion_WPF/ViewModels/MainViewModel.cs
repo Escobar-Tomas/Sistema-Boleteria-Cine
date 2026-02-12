@@ -1,6 +1,7 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CapaEntidad;
+using CapaNegocio;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CapaEntidad;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CapaPresentacion_WPF.ViewModels
@@ -50,7 +51,6 @@ namespace CapaPresentacion_WPF.ViewModels
             VistaActual = App.ServiceProvider.GetRequiredService<VentasViewModel>();
         }
 
-        // NUEVO COMANDO: Navegar a Usuarios
         [RelayCommand]
         public void MostrarUsuarios()
         {

@@ -1,9 +1,9 @@
-﻿using System;
-using System.Linq;
-using CapaDatos;
+﻿using CapaDatos;
 using CapaEntidad;
-using CapaNegocio.Interfaces;
-using Microsoft.EntityFrameworkCore;
+using CapaNegocio.Interfaces; // Asegúrate de tener este using
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CapaNegocio
 {
@@ -11,77 +11,88 @@ namespace CapaNegocio
     {
         private readonly BDContexto _db;
 
-        // Inyectamos el contexto de base de datos
         public CN_Ticket(BDContexto db)
         {
             _db = db;
         }
 
-        public string RegistrarVenta(Ticket obj)
+        public List<string> ObtenerAsientosOcupados(int idFuncion)
         {
-            try
+            return _db.Tickets
+                      .Where(t => t.IdFuncion == idFuncion)
+                      .Select(t => t.Asiento)
+                      .ToList();
+        }
+
+        // Implementación de RegistrarVenta (Coincide con la Interfaz)
+        public bool RegistrarVenta(int idFuncion, List<string> listaAsientos, decimal precioUnitario, out string mensaje)
+        {
+            mensaje = string.Empty;
+
+            if (listaAsientos == null || !listaAsientos.Any())
             {
-                // 1. Obtener la función incluyendo los datos de la sala para saber su capacidad
-                var funcion = _db.Funciones
-                    .Include(f => f.Sala)
-                    .FirstOrDefault(f => f.Id == obj.IdFuncion);
-
-                if (funcion == null)
-                    return "Error: La función seleccionada no existe.";
-
-                // 2. Validar que la función no haya comenzado
-                if (DateTime.Now >= funcion.FechaHoraInicio)
-                    return "Error: No se pueden vender tickets para una función que ya ha comenzado.";
-
-                // 3. Validar el Precio (Evita manipulación de datos desde la UI)
-                decimal montoCalculado = obj.CantidadTickets * funcion.PrecioTicket;
-                if (obj.MontoTotal != montoCalculado)
-                    return $"Error de integridad: El monto total no es válido. Debería ser {montoCalculado:C}.";
-
-                // 4. Validar Disponibilidad de Butacas
-                // Sumamos los tickets ya vendidos para esta función específica
-                int ticketsYaVendidos = _db.Tickets
-                    .Where(t => t.IdFuncion == obj.IdFuncion)
-                    .Sum(t => (int?)t.CantidadTickets) ?? 0;
-
-                int butacasDisponibles = funcion.Sala.Capacidad - ticketsYaVendidos;
-
-                if (obj.CantidadTickets > butacasDisponibles)
-                    return $"Venta rechazada: Solo quedan {butacasDisponibles} butacas disponibles para esta función.";
-
-                // 5. Si pasa todas las validaciones, guardamos la venta
-                _db.Tickets.Add(obj);
-                _db.SaveChanges();
-
-                return "Venta registrada con éxito.";
+                mensaje = "Debe seleccionar al menos un asiento.";
+                return false;
             }
-            catch (Exception ex)
+
+            using (var transaction = _db.Database.BeginTransaction())
             {
-                return "Error crítico al registrar la venta: " + ex.Message;
+                try
+                {
+                    foreach (string asiento in listaAsientos)
+                    {
+                        // Verificamos si ya está ocupado
+                        bool ocupado = _db.Tickets.Any(t => t.IdFuncion == idFuncion && t.Asiento == asiento);
+                        if (ocupado)
+                        {
+                            transaction.Rollback();
+                            mensaje = $"El asiento {asiento} ya no está disponible.";
+                            return false;
+                        }
+
+                        // Creamos el ticket individual
+                        Ticket nuevoTicket = new Ticket
+                        {
+                            IdFuncion = idFuncion,
+                            Asiento = asiento,
+                            Precio = precioUnitario, // Precio individual
+                            FechaVenta = DateTime.Now
+                        };
+
+                        _db.Tickets.Add(nuevoTicket);
+                    }
+
+                    _db.SaveChanges();
+                    transaction.Commit();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    mensaje = "Error al procesar la venta: " + ex.Message;
+                    return false;
+                }
             }
         }
 
-        public string AnularVenta(int idTicket)
+        // Implementación de AnularVenta (El método que faltaba)
+        public bool AnularVenta(int idTicket)
         {
             try
             {
-                var ticket = _db.Tickets.Find(idTicket);
-                if (ticket == null)
-                    return "El ticket no existe.";
+                Ticket ticketEncontrado = _db.Tickets.Find(idTicket);
 
-                // Validar que la función no haya pasado (opcional, dependiendo de las reglas del cine)
-                var funcion = _db.Funciones.Find(ticket.IdFuncion);
-                if (funcion != null && DateTime.Now > funcion.FechaHoraInicio)
-                    return "No se puede anular un ticket de una función que ya comenzó o terminó.";
-
-                _db.Tickets.Remove(ticket);
-                _db.SaveChanges();
-
-                return "Venta anulada correctamente. Las butacas han sido liberadas.";
+                if (ticketEncontrado != null)
+                {
+                    _db.Tickets.Remove(ticketEncontrado);
+                    _db.SaveChanges();
+                    return true;
+                }
+                return false;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return "Error al anular la venta: " + ex.Message;
+                return false;
             }
         }
     }

@@ -21,11 +21,7 @@ namespace CapaNegocio
         // Listar funciones incluyendo los datos de Pelicula y Sala (Include)
         public List<Funcion> Listar()
         {
-            return _db.Funciones
-                .Include(f => f.Pelicula)
-                .Include(f => f.Sala)
-                .Where(f => f.Estado == true)
-                .ToList();
+            return _db.Funciones.Include(f => f.Sala).Include(f => f.Pelicula).ToList();
         }
 
         public string Guardar(Funcion obj)

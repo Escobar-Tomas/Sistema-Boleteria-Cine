@@ -13,12 +13,14 @@ namespace CapaEntidad
         [ForeignKey("IdFuncion")]
         public virtual Funcion Funcion { get; set; }
 
+        // Guarda el código exacto del asiento (Ej: "A1", "B5")
         [Required]
-        public int CantidadTickets { get; set; }
+        [StringLength(5)]
+        public string Asiento { get; set; }
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
-        public decimal MontoTotal { get; set; }
+        public decimal Precio { get; set; }
 
         public DateTime FechaVenta { get; set; } = DateTime.Now;
     }

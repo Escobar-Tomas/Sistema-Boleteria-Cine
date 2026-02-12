@@ -21,25 +21,39 @@ namespace CapaNegocio
 
         public string Guardar(Sala obj)
         {
-            if (string.IsNullOrWhiteSpace(obj.Nombre)) return "El nombre es obligatorio.";
-            if (obj.Capacidad <= 0) return "La capacidad debe ser mayor a 0.";
+            if (string.IsNullOrWhiteSpace(obj.Nombre))
+                return "El nombre de la sala es obligatorio.";
+
+            if (obj.Filas <= 0 || obj.Columnas <= 0)
+                return "Las filas y columnas deben ser mayores a 0.";
+
+            // Cálculo automático para integridad de datos
+            obj.Capacidad = obj.Filas * obj.Columnas;
 
             try
             {
                 if (obj.Id == 0)
                 {
-                    _db.Salas.Add(obj); // Nueva
+                    _db.Salas.Add(obj);
                 }
                 else
                 {
-                    _db.Salas.Update(obj); // Editar
+                    var salaDb = _db.Salas.Find(obj.Id);
+                    if (salaDb != null)
+                    {
+                        salaDb.Nombre = obj.Nombre;
+                        salaDb.Filas = obj.Filas;
+                        salaDb.Columnas = obj.Columnas;
+                        salaDb.Capacidad = obj.Capacidad;
+                        salaDb.Estado = obj.Estado;
+                    }
                 }
                 _db.SaveChanges();
-                return "Sala guardada correctamente.";
+                return "Operación exitosa";
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                return "Error: " + ex.Message;
+                return "Error al guardar: " + ex.Message;
             }
         }
 

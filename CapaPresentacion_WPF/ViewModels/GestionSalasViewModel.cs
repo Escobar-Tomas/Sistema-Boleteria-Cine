@@ -1,78 +1,112 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CapaNegocio.Interfaces; // Asegúrate de incluir la carpeta de interfaces
 using CapaEntidad;
+using CapaNegocio.Interfaces;
 using System.Collections.ObjectModel;
-using System.Windows;
+using System.Collections.Generic;
+using System.Linq;
+using System;
 
 namespace CapaPresentacion_WPF.ViewModels
 {
     public partial class GestionSalasViewModel : ObservableObject
     {
-        // Usamos la interfaz en lugar de la clase concreta
-        private readonly ICN_Sala _negocio;
+        private readonly ICN_Sala _servicioSala;
 
-        // Colección enlazada a la DataGrid
-        public ObservableCollection<Sala> ListaSalas { get; set; } = new ObservableCollection<Sala>();
-
-        // Propiedades del Formulario
+        // 1. DECLARACIÓN DE PROPIEDADES
+        // El atributo [ObservableProperty] generará automáticamente la propiedad "ListaSalas"
         [ObservableProperty]
-        private string nombreSala;
+        private ObservableCollection<Sala> _listaSalas;
 
         [ObservableProperty]
-        private int capacidadSala;
+        private Sala _salaSeleccionada;
 
         [ObservableProperty]
-        private Sala salaSeleccionada;
+        [NotifyPropertyChangedFor(nameof(CapacidadCalculada))]
+        private int _filas;
 
-        // CAMBIO: Inyectamos la dependencia a través del constructor
-        public GestionSalasViewModel(ICN_Sala negocio)
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CapacidadCalculada))]
+        private int _columnas;
+
+        // Propiedad calculada para la interfaz
+        public int CapacidadCalculada => Filas * Columnas;
+
+        // 2. CONSTRUCTOR
+        public GestionSalasViewModel(ICN_Sala servicioSala)
         {
-            _negocio = negocio;
+            _servicioSala = servicioSala;
+
+            // Inicializamos la colección para que no sea nula antes de cargar
+            ListaSalas = new ObservableCollection<Sala>();
+
             CargarSalas();
+            Limpiar();
         }
 
+        // 3. MÉTODOS DE LÓGICA
         private void CargarSalas()
         {
-            ListaSalas.Clear();
-            var lista = _negocio.Listar();
-            foreach (var s in lista) ListaSalas.Add(s);
+            try
+            {
+                // Obtenemos la lista desde la capa de negocio
+                var lista = _servicioSala.Listar();
+                ListaSalas = new ObservableCollection<Sala>(lista);
+            }
+            catch (Exception)
+            {
+                // Manejo de error silencioso o log
+            }
+        }
+
+        // Este método se dispara automáticamente gracias a CommunityToolkit cuando cambia la selección
+        partial void OnSalaSeleccionadaChanged(Sala value)
+        {
+            if (value != null)
+            {
+                Filas = value.Filas;
+                Columnas = value.Columnas;
+            }
+            else
+            {
+                Filas = 0;
+                Columnas = 0;
+            }
+        }
+
+        // 4. COMANDOS
+        [RelayCommand]
+        private void Guardar()
+        {
+            if (SalaSeleccionada == null) return;
+
+            // Sincronizamos los valores del formulario al objeto
+            SalaSeleccionada.Filas = Filas;
+            SalaSeleccionada.Columnas = Columnas;
+            SalaSeleccionada.Capacidad = CapacidadCalculada;
+
+            string mensaje = _servicioSala.Guardar(SalaSeleccionada);
+
+            if (mensaje.Contains("Éxito") || mensaje.Contains("exitosa"))
+            {
+                CargarSalas();
+                Limpiar();
+            }
         }
 
         [RelayCommand]
-        public void Guardar()
+        private void Limpiar()
         {
-            var sala = new Sala
+            SalaSeleccionada = new Sala
             {
-                Nombre = NombreSala,
-                Capacidad = CapacidadSala,
-                Estado = true
+                Nombre = string.Empty,
+                Estado = true,
+                Filas = 0,
+                Columnas = 0,
+                Capacidad = 0
             };
-
-            // Si hay una seleccionada, es edición (asumimos lógica simple por ahora)
-            // Para simplificar, aquí siempre crea nueva. Luego podemos agregar edición.
-
-            string resultado = _negocio.Guardar(sala);
-            MessageBox.Show(resultado);
-
-            if (resultado.Contains("correctamente"))
-            {
-                NombreSala = "";
-                CapacidadSala = 0;
-                CargarSalas();
-            }
-        }
-
-        [RelayCommand]
-        public void Eliminar(Sala sala)
-        {
-            if (sala == null) return;
-
-            if (MessageBox.Show($"¿Eliminar {sala.Nombre}?", "Confirmar", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-            {
-                _negocio.Eliminar(sala.Id);
-                CargarSalas();
-            }
+            Filas = 0;
+            Columnas = 0;
         }
     }
 }
