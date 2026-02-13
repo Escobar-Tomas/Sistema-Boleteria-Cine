@@ -1,8 +1,8 @@
 ﻿using CapaEntidad;
-using CapaNegocio;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
+using CapaPresentacion_WPF.ViewModels;
 
 namespace CapaPresentacion_WPF.ViewModels
 {
@@ -11,21 +11,26 @@ namespace CapaPresentacion_WPF.ViewModels
         [ObservableProperty]
         private object _vistaActual;
 
+        // MANTENEMOS TU LÓGICA DE USUARIO INTACTA
         private Usuario _usuario;
 
-        // Propiedades para mostrar en la UI
         public string NombreUsuario => _usuario?.NombreCompleto ?? "Usuario Desconocido";
         public string RolUsuario => _usuario?.Rol ?? "Sin Rol";
 
         // Propiedad que controla si se ve el botón de Usuarios
         public bool EsAdministrador => _usuario?.Rol == "Administrador";
 
+        // Constructor que recibe el usuario del Login
         public MainViewModel(Usuario usuario)
         {
             _usuario = usuario;
 
-            MostrarVentas(); // Por defecto, es mejor mostrar Ventas al iniciar
+            // Iniciar en la pantalla de Ventas
+            MostrarVentas();
         }
+
+        // --- MÉTODOS DE NAVEGACIÓN CORREGIDOS (Factory Pattern) ---
+        // Usamos GetRequiredService para generar una instancia NUEVA y LIMPIA cada vez.
 
         [RelayCommand]
         public void MostrarPeliculas()
@@ -48,6 +53,8 @@ namespace CapaPresentacion_WPF.ViewModels
         [RelayCommand]
         public void MostrarVentas()
         {
+            // ALERTA: Esta es la línea clave que arregla el bug de "funciones desaparecidas".
+            // Crea un VentasViewModel nuevo con un DbContext nuevo.
             VistaActual = App.ServiceProvider.GetRequiredService<VentasViewModel>();
         }
 
@@ -55,6 +62,24 @@ namespace CapaPresentacion_WPF.ViewModels
         public void MostrarUsuarios()
         {
             VistaActual = App.ServiceProvider.GetRequiredService<GestionUsuariosViewModel>();
+        }
+
+        [RelayCommand]
+        public void CerrarSesion()
+        {
+            // Lógica opcional para cerrar la ventana actual y abrir el Login
+            var loginWindow = new LoginWindow();
+            loginWindow.Show();
+
+            // Cerrar la ventana principal actual
+            foreach (System.Windows.Window window in System.Windows.Application.Current.Windows)
+            {
+                if (window.DataContext == this)
+                {
+                    window.Close();
+                    break;
+                }
+            }
         }
     }
 }

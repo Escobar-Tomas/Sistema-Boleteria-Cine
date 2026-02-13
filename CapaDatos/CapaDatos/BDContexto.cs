@@ -19,14 +19,5 @@ namespace CapaDatos
         public DbSet<Funcion> Funciones { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            // Solo usamos la configuración por defecto si NO se ha configurado ya.
-            // Esto permite que las migraciones sigan funcionando si usas la consola.
-            if (!optionsBuilder.IsConfigured)
-            {
-                optionsBuilder.UseSqlServer("Server=DESKTOP-FGSHB0N\\SQLEXPRESS;Database=CineDB_Final;Integrated Security=True;TrustServerCertificate=True;");
-            }
-        }
     }
 }

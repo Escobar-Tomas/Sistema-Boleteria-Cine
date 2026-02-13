@@ -1,11 +1,12 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using CapaEntidad;
+﻿using CapaEntidad;
 using CapaNegocio.Interfaces;
-using System.Collections.ObjectModel;
-using System.Collections.Generic;
-using System.Linq;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Windows;
 
 namespace CapaPresentacion_WPF.ViewModels
 {
@@ -91,6 +92,11 @@ namespace CapaPresentacion_WPF.ViewModels
             {
                 CargarSalas();
                 Limpiar();
+            }
+            else
+            {
+                // Aquí atrapamos los errores como "Ya existe una sala..." o validaciones de tamaño
+                MessageBox.Show(mensaje, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

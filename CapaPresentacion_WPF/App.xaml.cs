@@ -33,7 +33,8 @@ namespace CapaPresentacion_WPF
             var services = new ServiceCollection();
 
             services.AddDbContext<BDContexto>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("CadenaSQL")));
+                options.UseSqlServer(Configuration.GetConnectionString("CadenaSQL")),
+                ServiceLifetime.Transient);
 
             // Registrar Servicios Externos obteniendo la API Key desde la Configuración
             services.AddSingleton<ITmdbService>(provider =>

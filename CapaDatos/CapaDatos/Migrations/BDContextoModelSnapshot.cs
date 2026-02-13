@@ -54,7 +54,7 @@ namespace CapaDatos.Migrations
 
                     b.HasIndex("IdSala");
 
-                    b.ToTable("Funciones");
+                    b.ToTable("Funciones", (string)null);
                 });
 
             modelBuilder.Entity("CapaEntidad.Pelicula", b =>
@@ -97,7 +97,7 @@ namespace CapaDatos.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Peliculas");
+                    b.ToTable("Peliculas", (string)null);
                 });
 
             modelBuilder.Entity("CapaEntidad.Sala", b =>
@@ -127,7 +127,7 @@ namespace CapaDatos.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Salas");
+                    b.ToTable("Salas", (string)null);
                 });
 
             modelBuilder.Entity("CapaEntidad.Ticket", b =>
@@ -156,7 +156,7 @@ namespace CapaDatos.Migrations
 
                     b.HasIndex("IdFuncion");
 
-                    b.ToTable("Tickets");
+                    b.ToTable("Tickets", (string)null);
                 });
 
             modelBuilder.Entity("CapaEntidad.Usuario", b =>
@@ -191,7 +191,7 @@ namespace CapaDatos.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Usuarios");
+                    b.ToTable("Usuarios", (string)null);
                 });
 
             modelBuilder.Entity("CapaEntidad.Funcion", b =>

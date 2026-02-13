@@ -26,16 +26,38 @@ namespace CapaPresentacion_WPF.ViewModels
         {
             _negocioFuncion = negocioFuncion;
             _negocioTicket = negocioTicket;
-            CargarCartelera();
+
+            _ = CargarDatosIniciales();
         }
 
-        private void CargarCartelera()
+        public async Task CargarDatosIniciales()
         {
-            ListaFunciones.Clear();
-            // IMPORTANTE: Asegúrate de que tu método Listar() traiga la Sala (Include)
-            // Si la Sala es null, el programa fallará al intentar leer Filas/Columnas.
-            var funciones = _negocioFuncion.Listar().Where(f => f.Estado == true);
-            foreach (var f in funciones) ListaFunciones.Add(f);
+            try
+            {
+                // Limpiamos visualmente antes de cargar
+                // Usamos Application.Current.Dispatcher para asegurar que tocamos la UI desde el hilo correcto
+                Application.Current.Dispatcher.Invoke(() => ListaFunciones.Clear());
+
+                // 1. Ejecutar la consulta en hilo secundario
+                var funcionesDesdeBD = await Task.Run(() =>
+                {
+                    // Nota: Asegúrate que tu CN_Funcion.Listar() use .AsNoTracking() si es posible
+                    return _negocioFuncion.Listar().Where(f => f.Estado == true).ToList();
+                });
+
+                // 2. Actualizar la UI en el hilo principal
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    foreach (var f in funcionesDesdeBD)
+                    {
+                        ListaFunciones.Add(f);
+                    }
+                });
+            }
+            catch (System.Exception ex)
+            {
+                MessageBox.Show($"Error al cargar la cartelera: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private bool PuedeFinalizarVenta() => FuncionSeleccionada != null;
