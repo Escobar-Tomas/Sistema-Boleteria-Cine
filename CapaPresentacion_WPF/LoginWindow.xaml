@@ -50,8 +50,8 @@
                 <TextBlock Text="CINE SYSTEM" FontSize="26" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#2C3E50"/>
                 <TextBlock Text="Bienvenido de nuevo" Foreground="#7F8C8D" HorizontalAlignment="Center" Margin="0,5,0,30" FontSize="14"/>
 
-                <TextBlock Text="Correo Electrónico" Foreground="#34495E" FontWeight="SemiBold" Margin="0,0,0,5"/>
-                <TextBox x:Name="txtCorreo" Style="{StaticResource InputStyle}" Margin="0,0,0,15"/>
+                <TextBlock Text="Nombre de Usuario" Foreground="#34495E" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                <TextBox x:Name="txtUsuario" Style="{StaticResource InputStyle}" Margin="0,0,0,15"/>
 
                 <TextBlock Text="Contraseña" Foreground="#34495E" FontWeight="SemiBold" Margin="0,0,0,5"/>
 

@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input; // Necesario para mover la ventana
+using System.Windows.Input;
 using CapaNegocio.Interfaces;
 using CapaEntidad;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,26 +27,32 @@ namespace CapaPresentacion_WPF
 
         private void btnIngresar_Click(object sender, RoutedEventArgs e)
         {
-            // Obtenemos la contraseña real dependiendo de cuál caja esté visible
+            // Obtener la contraseña correcta
             string passwordFinal = txtClave.Visibility == Visibility.Visible ? txtClave.Password : txtClaveVisible.Text;
 
-            if (string.IsNullOrWhiteSpace(txtCorreo.Text) || string.IsNullOrWhiteSpace(passwordFinal))
+            // Obtener el usuario
+            string usuarioIngresado = txtUsuario.Text;
+
+            // Validaciones básicas
+            if (string.IsNullOrWhiteSpace(usuarioIngresado) || string.IsNullOrWhiteSpace(passwordFinal))
             {
                 MessageBox.Show("Por favor, complete todos los campos.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            Usuario usuarioEncontrado = _negocioUsuario.Login(txtCorreo.Text, passwordFinal);
+            // Llamada a la Capa de Negocio
+            Usuario usuarioEncontrado = _negocioUsuario.Login(usuarioIngresado, passwordFinal);
 
             if (usuarioEncontrado != null)
             {
+                // Login Exitoso: Pasamos el objeto usuario al MainViewModel
                 MainWindow dashboard = new MainWindow(usuarioEncontrado);
                 dashboard.Show();
                 this.Close();
             }
             else
             {
-                MessageBox.Show("Correo o contraseña incorrectos", "Error de Acceso", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Usuario o contraseña incorrectos", "Error de Acceso", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

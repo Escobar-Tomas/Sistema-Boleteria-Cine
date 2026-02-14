@@ -4,6 +4,7 @@ using CapaNegocio.Interfaces;
 using CapaEntidad;
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Linq;
 
 namespace CapaPresentacion_WPF.ViewModels
 {
@@ -18,7 +19,7 @@ namespace CapaPresentacion_WPF.ViewModels
 
         // Propiedades del formulario
         [ObservableProperty] private string nombreCompletoForm;
-        [ObservableProperty] private string correoForm;
+        [ObservableProperty] private string nombreUsuarioForm;
         [ObservableProperty] private string claveForm;
         [ObservableProperty] private string rolForm;
         [ObservableProperty] private Usuario usuarioSeleccionado;
@@ -37,12 +38,13 @@ namespace CapaPresentacion_WPF.ViewModels
             foreach (var u in lista) ListaUsuarios.Add(u);
         }
 
+        // Actualizar mapeo al seleccionar un usuario de la lista
         partial void OnUsuarioSeleccionadoChanged(Usuario value)
         {
             if (value != null)
             {
                 NombreCompletoForm = value.NombreCompleto;
-                CorreoForm = value.Correo;
+                NombreUsuarioForm = value.NombreUsuario;
                 RolForm = value.Rol;
                 ClaveForm = ""; // Se deja vacía por seguridad
             }
@@ -53,7 +55,14 @@ namespace CapaPresentacion_WPF.ViewModels
         {
             string mensaje = "";
 
-            if (UsuarioSeleccionado == null) // NUEVO
+            // Validaciones básicas
+            if (string.IsNullOrWhiteSpace(NombreUsuarioForm) || string.IsNullOrWhiteSpace(NombreCompletoForm))
+            {
+                MessageBox.Show("El nombre de usuario y nombre completo son obligatorios.");
+                return;
+            }
+
+            if (UsuarioSeleccionado == null) // NUEVO USUARIO
             {
                 if (string.IsNullOrWhiteSpace(ClaveForm))
                 {
@@ -64,27 +73,35 @@ namespace CapaPresentacion_WPF.ViewModels
                 var nuevoUsuario = new Usuario
                 {
                     NombreCompleto = NombreCompletoForm,
-                    Correo = CorreoForm,
+                    NombreUsuario = NombreUsuarioForm, // Usamos la propiedad nueva
                     Rol = RolForm,
                     Estado = true
                 };
+
+                // USAMOS TU MÉTODO REGISTRAR
                 mensaje = _negocioUsuario.Registrar(nuevoUsuario, ClaveForm);
             }
-            else // EDICIÓN
+            else // EDICIÓN DE USUARIO EXISTENTE
             {
                 UsuarioSeleccionado.NombreCompleto = NombreCompletoForm;
-                UsuarioSeleccionado.Correo = CorreoForm;
+                UsuarioSeleccionado.NombreUsuario = NombreUsuarioForm;
                 UsuarioSeleccionado.Rol = RolForm;
 
+                // USAMOS TU MÉTODO EDITAR
+                // Pasamos ClaveForm. Si está vacía, tu lógica de negocio debería ignorarla.
                 mensaje = _negocioUsuario.Editar(UsuarioSeleccionado, ClaveForm);
             }
 
-            MessageBox.Show(mensaje);
-
-            if (mensaje.Contains("correctamente") || mensaje.Contains("registrado"))
+            // Verificamos el mensaje de éxito (ajusta el texto según lo que retorne tu CN_Usuario)
+            if (mensaje.ToLower().Contains("éxito") || mensaje.ToLower().Contains("correctamente") || mensaje.ToLower().Contains("registrado")) // Agregué "registrado" por si acaso
             {
+                MessageBox.Show(mensaje, "Información", MessageBoxButton.OK, MessageBoxImage.Information);
                 LimpiarFormulario();
                 CargarUsuarios();
+            }
+            else
+            {
+                MessageBox.Show(mensaje, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -95,6 +112,7 @@ namespace CapaPresentacion_WPF.ViewModels
 
             if (MessageBox.Show($"¿Dar de baja a {usuario.NombreCompleto}?", "Confirmar", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
+                // Asegúrate que ICN_Usuario tenga el método Eliminar definido
                 _negocioUsuario.Eliminar(usuario.Id);
                 CargarUsuarios();
                 LimpiarFormulario();
@@ -106,7 +124,7 @@ namespace CapaPresentacion_WPF.ViewModels
         {
             UsuarioSeleccionado = null;
             NombreCompletoForm = "";
-            CorreoForm = "";
+            NombreUsuarioForm = ""; // Antes: CorreoForm
             ClaveForm = "";
             RolForm = "Empleado";
         }

@@ -12,8 +12,8 @@ namespace CapaEntidad
         public string NombreCompleto { get; set; }
 
         [Required]
-        [StringLength(100)]
-        public string Correo { get; set; }
+        [StringLength(50)]
+        public string NombreUsuario { get; set; }
 
         [Required]
         public string Clave { get; set; } // Aquí guardaremos el HASH, no la clave real

@@ -9,11 +9,15 @@ namespace CapaEntidad
         [Key]
         public int Id { get; set; }
 
+        // RELACIONES OBLIGATORIAS
         public int IdFuncion { get; set; }
         [ForeignKey("IdFuncion")]
         public virtual Funcion Funcion { get; set; }
 
-        // Guarda el código exacto del asiento (Ej: "A1", "B5")
+        public int IdUsuario { get; set; }
+        [ForeignKey("IdUsuario")]
+        public virtual Usuario Usuario { get; set; }
+
         [Required]
         [StringLength(5)]
         public string Asiento { get; set; }

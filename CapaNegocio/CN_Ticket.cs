@@ -25,7 +25,7 @@ namespace CapaNegocio
         }
 
         // Implementación de RegistrarVenta (Coincide con la Interfaz)
-        public bool RegistrarVenta(int idFuncion, List<string> listaAsientos, decimal precioUnitario, out string mensaje)
+        public bool RegistrarVenta(int idFuncion, int idUsuario, List<string> listaAsientos, decimal precioUnitario, out string mensaje)
         {
             mensaje = string.Empty;
 
@@ -54,6 +54,7 @@ namespace CapaNegocio
                         Ticket nuevoTicket = new Ticket
                         {
                             IdFuncion = idFuncion,
+                            IdUsuario = idUsuario,
                             Asiento = asiento,
                             Precio = precioUnitario, // Precio individual
                             FechaVenta = DateTime.Now

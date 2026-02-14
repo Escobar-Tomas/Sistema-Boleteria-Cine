@@ -15,14 +15,14 @@ namespace CapaNegocio
             _db = db;
         }
 
-        public Usuario Login(string correo, string clave)
+        public Usuario Login(string nombreUsuario, string clave)
         {
             string claveEncriptada = CN_Recursos.ConvertirSha256(clave);
 
-            return _db.Usuarios
-                .FirstOrDefault(u => u.Correo == correo &&
-                                     u.Clave == claveEncriptada &&
-                                     u.Estado == true);
+            return _db.Usuarios.FirstOrDefault(u =>
+                u.NombreUsuario == nombreUsuario &&
+                u.Clave == claveEncriptada &&
+                u.Estado == true);
         }
 
         public string Registrar(Usuario obj, string claveTextoPlano)
@@ -52,7 +52,7 @@ namespace CapaNegocio
 
                 // Actualizamos todos los datos básicos
                 usuarioDb.NombreCompleto = obj.NombreCompleto;
-                usuarioDb.Correo = obj.Correo;
+                usuarioDb.NombreUsuario = obj.NombreUsuario;
                 usuarioDb.Rol = obj.Rol;
                 usuarioDb.Estado = obj.Estado;
 

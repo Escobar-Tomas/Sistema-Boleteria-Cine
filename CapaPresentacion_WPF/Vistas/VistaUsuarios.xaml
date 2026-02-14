@@ -1,10 +1,11 @@
 ﻿<UserControl x:Class="CapaPresentacion_WPF.Vistas.VistaUsuarios"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="1000" Background="Transparent">
+             d:DesignHeight="600" d:DesignWidth="1000"
+             Background="#F5F5F5">
 
     <Grid Margin="20">
         <Grid.ColumnDefinitions>
@@ -12,123 +13,136 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Background="White" CornerRadius="10" Margin="0,0,20,0" VerticalAlignment="Top" Padding="25">
+        <Border Grid.Column="0" Background="White" CornerRadius="10" Margin="0,0,20,0">
             <Border.Effect>
-                <DropShadowEffect BlurRadius="15" Direction="270" ShadowDepth="3" Color="#EAEAEA"/>
+                <DropShadowEffect Color="Black" Direction="270" ShadowDepth="3" Opacity="0.1" BlurRadius="10"/>
             </Border.Effect>
 
-            <StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,25">
-                    <TextBlock Text="👤" FontSize="24" Margin="0,0,10,0"/>
-                    <TextBlock Text="Gestión de Usuarios" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" VerticalAlignment="Center"/>
+            <Grid Margin="20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                    <TextBlock Text="Detalles del Usuario" FontSize="20" FontWeight="Bold" Foreground="#333"/>
+                    <TextBlock Text="Complete la información para registrar" FontSize="12" Foreground="#888"/>
                 </StackPanel>
 
-                <TextBlock Text="Nombre Completo" Foreground="#7F8C8D" Margin="0,0,0,5"/>
-                <TextBox Text="{Binding NombreCompletoForm}" Height="40" VerticalContentAlignment="Center" Padding="10" 
-                         Background="#F5F6FA" BorderBrush="#DCDDE1" BorderThickness="1" Margin="0,0,0,15"/>
+                <StackPanel Grid.Row="1">
+                    <TextBlock Text="Nombre Completo" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <TextBox Text="{Binding NombreCompletoForm, UpdateSourceTrigger=PropertyChanged}" 
+                             Height="35" Padding="5" VerticalContentAlignment="Center" Margin="0,0,0,15"/>
 
-                <TextBlock Text="Correo Electrónico" Foreground="#7F8C8D" Margin="0,0,0,5"/>
-                <TextBox Text="{Binding CorreoForm}" Height="40" VerticalContentAlignment="Center" Padding="10"
-                         Background="#F5F6FA" BorderBrush="#DCDDE1" BorderThickness="1" Margin="0,0,0,15"/>
+                    <TextBlock Text="Nombre de Usuario" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <TextBox Text="{Binding NombreUsuarioForm, UpdateSourceTrigger=PropertyChanged}" 
+                             Height="35" Padding="5" VerticalContentAlignment="Center" Margin="0,0,0,15"/>
 
-                <TextBlock Text="Contraseña" Foreground="#7F8C8D" Margin="0,0,0,5"/>
-                <TextBox Text="{Binding ClaveForm}" Height="40" VerticalContentAlignment="Center" Padding="10"
-                         Background="#F5F6FA" BorderBrush="#DCDDE1" BorderThickness="1" Margin="0,0,0,5"/>
-                <TextBlock Text="*Dejar vacío para no cambiar" FontSize="11" Foreground="#BDC3C7" Margin="0,0,0,20"/>
+                    <TextBlock Text="Rol Asignado" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding ListaRoles}" 
+                              SelectedItem="{Binding RolForm}"
+                              Height="35" VerticalContentAlignment="Center" Margin="0,0,0,15"/>
 
-                <TextBlock Text="Rol Asignado" Foreground="#7F8C8D" Margin="0,0,0,5"/>
-                <ComboBox ItemsSource="{Binding ListaRoles}" SelectedItem="{Binding RolForm}" Height="40" Padding="10" Margin="0,0,0,30" VerticalContentAlignment="Center"/>
+                    <TextBlock Text="Contraseña" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <PasswordBox x:Name="txtPassword"
+                                 Height="35" Padding="5" VerticalContentAlignment="Center" Margin="0,0,0,5"
+                                 PasswordChanged="txtPassword_PasswordChanged"/>
+                    <TextBlock Text="Dejar vacío para mantener la actual (en edición)" 
+                               FontSize="10" Foreground="#999" Margin="0,0,0,15"/>
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="10"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+                </StackPanel>
 
-                    <Button Grid.Column="0" Command="{Binding GuardarCommand}" Content="Guardar" 
-                            Height="40" Background="#27AE60" Foreground="White" FontWeight="Bold" Cursor="Hand">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" CornerRadius="6">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#2ECC71"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Button.Template>
+                <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,20,0,0">
+                    <Button Command="{Binding GuardarCommand}" Content="GUARDAR USUARIO" 
+                            Height="40" Background="#3F51B5" Foreground="White" FontWeight="Bold"
+                            BorderThickness="0" Margin="0,0,0,10" Cursor="Hand">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="5"/>
+                            </Style>
+                        </Button.Resources>
                     </Button>
 
-                    <Button Grid.Column="2" Command="{Binding LimpiarFormularioCommand}" Content="Limpiar" 
-                            Height="40" Background="#95A5A6" Foreground="White" FontWeight="Bold" Cursor="Hand">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}" CornerRadius="6">
-                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
+                    <Button Command="{Binding LimpiarFormularioCommand}" Content="Cancelar / Limpiar" 
+                            Height="35" Background="Transparent" Foreground="#555" BorderBrush="#CCC" BorderThickness="1"
+                            Cursor="Hand" Click="btnLimpiar_Click">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="5"/>
+                            </Style>
+                        </Button.Resources>
                     </Button>
-                </Grid>
-            </StackPanel>
+                </StackPanel>
+            </Grid>
         </Border>
 
-        <Border Grid.Column="1" Background="White" CornerRadius="10" Padding="20">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="15" Direction="270" ShadowDepth="3" Color="#EAEAEA"/>
-            </Border.Effect>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-            <DockPanel>
-                <TextBlock Text="Usuarios del Sistema" DockPanel.Dock="Top" FontSize="18" FontWeight="Bold" Foreground="#34495E" Margin="10,0,0,20"/>
+            <TextBlock Text="Lista de Usuarios Registrados" 
+                       FontSize="22" FontWeight="SemiBold" Foreground="#333" Margin="0,0,0,15"/>
 
-                <DataGrid ItemsSource="{Binding ListaUsuarios}" SelectedItem="{Binding UsuarioSeleccionado}"
-                          AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" BorderThickness="0" RowHeight="50"
-                          GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#F0F0F0" HeadersVisibility="Column" Background="White">
+            <DataGrid Grid.Row="1" 
+                      ItemsSource="{Binding ListaUsuarios}" 
+                      SelectedItem="{Binding UsuarioSeleccionado}"
+                      AutoGenerateColumns="False" 
+                      CanUserAddRows="False"
+                      IsReadOnly="True"
+                      HeadersVisibility="Column"
+                      Background="White"
+                      BorderThickness="0"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="#EEE"
+                      RowHeight="40">
 
-                    <DataGrid.Resources>
-                        <Style TargetType="DataGridColumnHeader">
-                            <Setter Property="Background" Value="Transparent"/>
-                            <Setter Property="Foreground" Value="#95A5A6"/>
-                            <Setter Property="FontWeight" Value="SemiBold"/>
-                            <Setter Property="Padding" Value="10,0"/>
-                            <Setter Property="Height" Value="40"/>
-                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                            <Setter Property="BorderBrush" Value="#E0E0E0"/>
-                        </Style>
-                    </DataGrid.Resources>
+                <DataGrid.Resources>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Padding" Value="10,0"/>
+                        <Setter Property="Height" Value="40"/>
+                        <Setter Property="Background" Value="#F9F9F9"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                    </Style>
+                </DataGrid.Resources>
 
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Nombre" Binding="{Binding NombreCompleto}" Width="*"/>
-                        <DataGridTextColumn Header="Correo" Binding="{Binding Correo}" Width="1.5*"/>
+                <DataGrid.Effect>
+                    <DropShadowEffect Color="Black" Direction="270" ShadowDepth="2" Opacity="0.05" BlurRadius="5"/>
+                </DataGrid.Effect>
 
-                        <DataGridTemplateColumn Header="Rol" Width="100">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Border Background="#ECF0F1" CornerRadius="4" Padding="8,4" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Rol}" Foreground="#7F8C8D" FontWeight="Bold" FontSize="11"/>
-                                    </Border>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Nombre Completo" Binding="{Binding NombreCompleto}" Width="*"/>
 
-                        <DataGridCheckBoxColumn Header="Activo" Binding="{Binding Estado}" Width="60"/>
+                    <DataGridTextColumn Header="Usuario" Binding="{Binding NombreUsuario}" Width="150"/>
 
-                        <DataGridTemplateColumn Header="Acción" Width="80">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Button Command="{Binding DataContext.EliminarCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" 
-                                            CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Dar de baja">
-                                        <TextBlock Text="⛔" Foreground="#C0392B" FontSize="16"/>
-                                    </Button>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </DockPanel>
-        </Border>
+                    <DataGridTextColumn Header="Rol" Binding="{Binding Rol}" Width="120"/>
+
+                    <DataGridTemplateColumn Width="80">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding DataContext.EliminarCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                    CommandParameter="{Binding}"
+                    ToolTip="Eliminar Usuario"
+                    Background="#FFEBEE" 
+                    Foreground="#D32F2F" 
+                    BorderThickness="0"
+                    Width="30" Height="30" 
+                    HorizontalAlignment="Center"
+                    Content="🗑">
+
+                                    <Button.Resources>
+                                        <Style TargetType="Border">
+                                            <Setter Property="CornerRadius" Value="15"/>
+                                        </Style>
+                                    </Button.Resources>
+                                </Button>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
     </Grid>
 </UserControl>

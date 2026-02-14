@@ -2,7 +2,7 @@
 using CommunityToolkit.Mvvm.Input;
 using CapaNegocio.Interfaces;
 using CapaEntidad;
-using CapaPresentacion_WPF.Vistas; // Necesario para abrir la ventana
+using CapaPresentacion_WPF.Vistas; 
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Linq;
@@ -14,6 +14,8 @@ namespace CapaPresentacion_WPF.ViewModels
     {
         private readonly ICN_Funcion _negocioFuncion;
         private readonly ICN_Ticket _negocioTicket;
+
+        public int IdUsuarioActual { get; set; }
 
         public ObservableCollection<Funcion> ListaFunciones { get; set; } = new ObservableCollection<Funcion>();
 
@@ -107,11 +109,12 @@ namespace CapaPresentacion_WPF.ViewModels
         {
             string mensaje;
             bool exito = _negocioTicket.RegistrarVenta(
-                FuncionSeleccionada.Id,
-                asientos,
-                FuncionSeleccionada.PrecioTicket,
-                out mensaje
-            );
+            FuncionSeleccionada.Id,
+            IdUsuarioActual, // <--- Usamos la variable que recibimos
+            asientos,
+            FuncionSeleccionada.PrecioTicket,
+            out mensaje
+        );
 
             if (exito)
             {

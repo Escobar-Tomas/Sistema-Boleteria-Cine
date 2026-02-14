@@ -53,9 +53,14 @@ namespace CapaPresentacion_WPF.ViewModels
         [RelayCommand]
         public void MostrarVentas()
         {
-            // ALERTA: Esta es la línea clave que arregla el bug de "funciones desaparecidas".
-            // Crea un VentasViewModel nuevo con un DbContext nuevo.
-            VistaActual = App.ServiceProvider.GetRequiredService<VentasViewModel>();
+            var ventasVM = App.ServiceProvider.GetRequiredService<VentasViewModel>();
+
+            if (_usuario != null)
+            {
+                ventasVM.IdUsuarioActual = _usuario.Id;
+            }
+
+            VistaActual = ventasVM;
         }
 
         [RelayCommand]

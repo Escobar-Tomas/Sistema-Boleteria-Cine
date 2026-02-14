@@ -4,6 +4,7 @@ using CapaDatos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CapaDatos.Migrations
 {
     [DbContext(typeof(BDContexto))]
-    partial class BDContextoModelSnapshot : ModelSnapshot
+    [Migration("20260213225006_ModificacionUsuario")]
+    partial class ModificacionUsuario
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -149,17 +152,12 @@ namespace CapaDatos.Migrations
                     b.Property<int>("IdFuncion")
                         .HasColumnType("int");
 
-                    b.Property<int>("IdUsuario")
-                        .HasColumnType("int");
-
                     b.Property<decimal>("Precio")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("IdFuncion");
-
-                    b.HasIndex("IdUsuario");
 
                     b.ToTable("Tickets");
                 });
@@ -226,15 +224,7 @@ namespace CapaDatos.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CapaEntidad.Usuario", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("IdUsuario")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Funcion");
-
-                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("CapaEntidad.Pelicula", b =>
