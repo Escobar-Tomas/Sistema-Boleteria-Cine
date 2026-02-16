@@ -2,11 +2,15 @@
 using CommunityToolkit.Mvvm.Input;
 using CapaNegocio.Interfaces;
 using CapaEntidad;
-using CapaPresentacion_WPF.Vistas; 
+// Asegúrate de tener este using para la ventana de asientos
+// using CapaPresentacion_WPF.Vistas; 
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Linq;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using System;
+using CapaPresentacion_WPF.Vistas;
 
 namespace CapaPresentacion_WPF.ViewModels
 {
@@ -15,117 +19,139 @@ namespace CapaPresentacion_WPF.ViewModels
         private readonly ICN_Funcion _negocioFuncion;
         private readonly ICN_Ticket _negocioTicket;
 
-        public int IdUsuarioActual { get; set; }
-
-        public ObservableCollection<Funcion> ListaFunciones { get; set; } = new ObservableCollection<Funcion>();
+        // Propiedades de Usuario
+        public int IdUsuarioActual { get; set; } = 1;
 
         [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(FinalizarVentaCommand))]
+        private string metodoPago = "Efectivo"; // Valor por defecto
+
+        public List<string> ListaMetodosPago { get; } = new List<string>
+        {
+            "Efectivo",
+            "Tarjeta Débito",
+            "Tarjeta Crédito",
+            "Mercado Pago"
+        };
+
+        // --- COLECCIONES ---
+        // Renombramos a FuncionesDelDia para ser más específicos
+        public ObservableCollection<Funcion> FuncionesDelDia { get; set; } = new ObservableCollection<Funcion>();
+
+        // --- FILTROS ---
+        [ObservableProperty]
+        private DateTime fechaVenta = DateTime.Today;
+
+        // --- SELECCIÓN ---
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(IniciarVentaCommand))]
         private Funcion funcionSeleccionada;
 
-        // Inyección de dependencias
         public VentasViewModel(ICN_Funcion negocioFuncion, ICN_Ticket negocioTicket)
         {
             _negocioFuncion = negocioFuncion;
             _negocioTicket = negocioTicket;
 
-            _ = CargarDatosIniciales();
+            // Iniciamos carga asíncrona
+            _ = CargarFunciones();
         }
 
-        public async Task CargarDatosIniciales()
+        [RelayCommand]
+        public async Task CargarFunciones()
         {
             try
             {
-                // Limpiamos visualmente antes de cargar
-                // Usamos Application.Current.Dispatcher para asegurar que tocamos la UI desde el hilo correcto
-                Application.Current.Dispatcher.Invoke(() => ListaFunciones.Clear());
+                // CORRECCIÓN PRINCIPAL: Usamos el método asíncrono y filtramos por fecha
+                var lista = await _negocioFuncion.ListarPorFechaAsync(fechaVenta);
 
-                // 1. Ejecutar la consulta en hilo secundario
-                var funcionesDesdeBD = await Task.Run(() =>
+                FuncionesDelDia.Clear();
+                foreach (var f in lista)
                 {
-                    // Nota: Asegúrate que tu CN_Funcion.Listar() use .AsNoTracking() si es posible
-                    return _negocioFuncion.Listar().Where(f => f.Estado == true).ToList();
-                });
-
-                // 2. Actualizar la UI en el hilo principal
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    foreach (var f in funcionesDesdeBD)
-                    {
-                        ListaFunciones.Add(f);
-                    }
-                });
+                    // Opcional: Filtrar funciones que ya pasaron hace mucho (ej: más de 2 horas)
+                    // if (f.FechaHoraInicio > DateTime.Now.AddHours(-2)) 
+                    FuncionesDelDia.Add(f);
+                }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar la cartelera: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show($"Error al cargar cartelera: {ex.Message}");
             }
         }
 
-        private bool PuedeFinalizarVenta() => FuncionSeleccionada != null;
-
-        [RelayCommand(CanExecute = nameof(PuedeFinalizarVenta))]
-        public void FinalizarVenta()
+        // Método auxiliar para seleccionar desde la UI (Botón en tarjeta)
+        [RelayCommand]
+        public void SeleccionarFuncion(Funcion funcion)
         {
-            // 1. Validar que la función tenga una Sala asociada cargada correctamente
+            FuncionSeleccionada = funcion;
+        }
+
+        private bool PuedeIniciarVenta() => FuncionSeleccionada != null;
+
+        [RelayCommand(CanExecute = nameof(PuedeIniciarVenta))]
+        public void IniciarVenta()
+        {
+            if (FuncionSeleccionada == null) return;
+
+            // Validar Sala
             if (FuncionSeleccionada.Sala == null)
             {
-                MessageBox.Show("Error: No se pudo recuperar la información de la sala. Verifique que CN_Funcion incluya la Sala.", "Error de Datos", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Error de datos: La función no tiene Sala asignada.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
-            // 2. Obtener los asientos que YA están ocupados en la BD
-            var ocupados = _negocioTicket.ObtenerAsientosOcupados(FuncionSeleccionada.Id);
-
-            // 3. Preparar el ViewModel y la Ventana de Selección
-            var vmSeleccion = new SeleccionAsientosViewModel(
-                FuncionSeleccionada.Sala,
-                FuncionSeleccionada.PrecioTicket,
-                ocupados
-            );
-
-            var ventanaSeleccion = new SeleccionAsientosWindow
+            try
             {
-                DataContext = vmSeleccion,
-                Owner = Application.Current.MainWindow // Para que sea modal sobre la principal
-            };
+                // 1. Obtener asientos ocupados (Asumimos que Ticket sigue siendo síncrono por ahora)
+                var ocupados = _negocioTicket.ObtenerAsientosOcupados(FuncionSeleccionada.Id);
 
-            // 4. Configurar qué pasa cuando el usuario confirma en la otra ventana
-            vmSeleccion.OnConfirmar = (listaAsientosElegidos) =>
+                // 2. Instanciar VM y Ventana de Asientos (Tu lógica original)
+                // Nota: Asegúrate de tener referenciada la clase SeleccionAsientosViewModel
+                /* Si te da error aquí, verifica que SeleccionAsientosViewModel reciba los parámetros correctos.
+                   Asumo constructor: (Sala sala, decimal precio, List<string> ocupados)
+                */
+                var vmSeleccion = new SeleccionAsientosViewModel(FuncionSeleccionada.Sala, FuncionSeleccionada.PrecioTicket, ocupados);
+
+                var ventana = new SeleccionAsientosWindow { DataContext = vmSeleccion, Owner = Application.Current.MainWindow };
+
+                vmSeleccion.OnConfirmar = (asientos) => {
+                    ventana.DialogResult = true;
+                    ventana.Close();
+                    ProcesarVenta(asientos);
+                 };
+
+                ventana.ShowDialog();
+
+                // COMO NO TENGO TU CLASE DE ASIENTOS, DEJO ESTE PLACEHOLDER:
+                // MessageBox.Show($"Aquí se abriría la selección de asientos para '{FuncionSeleccionada.Pelicula.Titulo}'.\nImplementa la llamada a tu ventana SeleccionAsientosWindow aquí.", "Flujo de Venta");
+            }
+            catch (Exception ex)
             {
-                // Cerramos la ventana visual
-                ventanaSeleccion.DialogResult = true;
-                ventanaSeleccion.Close();
-
-                // 5. Procesar la venta final
-                ProcesarVenta(listaAsientosElegidos);
-            };
-
-            // 6. Mostrar la ventana de forma Modal (bloquea la de atrás)
-            ventanaSeleccion.ShowDialog();
+                MessageBox.Show($"Error al iniciar venta: {ex.Message}");
+            }
         }
 
-        private void ProcesarVenta(List<string> asientos)
+        public void ProcesarVenta(List<string> asientos)
         {
+            if (asientos == null || !asientos.Any()) return;
+
             string mensaje;
             bool exito = _negocioTicket.RegistrarVenta(
-            FuncionSeleccionada.Id,
-            IdUsuarioActual, // <--- Usamos la variable que recibimos
-            asientos,
-            FuncionSeleccionada.PrecioTicket,
-            out mensaje
-        );
+                FuncionSeleccionada.Id,
+                IdUsuarioActual,
+                asientos,
+                FuncionSeleccionada.PrecioTicket,
+                metodoPago,
+                out mensaje
+            );
 
             if (exito)
             {
-                MessageBox.Show($"¡Venta Exitosa!\nTickets generados: {asientos.Count}\nAsientos: {string.Join(", ", asientos)}", "Venta Completada", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                // Reiniciamos la selección para obligar a recargar ocupados si quiere vender de nuevo
-                FuncionSeleccionada = null;
+                MessageBox.Show($"¡Venta Exitosa!\nTickets: {asientos.Count}\nTotal: ${asientos.Count * FuncionSeleccionada.PrecioTicket}", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                FuncionSeleccionada = null; // Limpiar selección
+                metodoPago = "Efectivo";
             }
             else
             {
-                MessageBox.Show($"Error en la venta:\n{mensaje}", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show($"Error al registrar venta: {mensaje}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

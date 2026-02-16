@@ -1,6 +1,6 @@
 ﻿using CapaDatos;
 using CapaEntidad;
-using CapaNegocio.Interfaces; // Asegúrate de tener este using
+using CapaNegocio.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,8 +24,8 @@ namespace CapaNegocio
                       .ToList();
         }
 
-        // Implementación de RegistrarVenta (Coincide con la Interfaz)
-        public bool RegistrarVenta(int idFuncion, int idUsuario, List<string> listaAsientos, decimal precioUnitario, out string mensaje)
+        // Implementación de RegistrarVenta
+        public bool RegistrarVenta(int idFuncion, int idUsuario, List<string> listaAsientos, decimal precioUnitario, string metodoPago, out string mensaje)
         {
             mensaje = string.Empty;
 
@@ -39,11 +39,16 @@ namespace CapaNegocio
             {
                 try
                 {
+                    // Obtener TODOS los ocupados de esta función
+                    var ocupadosDb = _db.Tickets
+                                        .Where(t => t.IdFuncion == idFuncion)
+                                        .Select(t => t.Asiento)
+                                        .ToHashSet();
+
                     foreach (string asiento in listaAsientos)
                     {
                         // Verificamos si ya está ocupado
-                        bool ocupado = _db.Tickets.Any(t => t.IdFuncion == idFuncion && t.Asiento == asiento);
-                        if (ocupado)
+                        if (ocupadosDb.Contains(asiento))
                         {
                             transaction.Rollback();
                             mensaje = $"El asiento {asiento} ya no está disponible.";
@@ -56,8 +61,9 @@ namespace CapaNegocio
                             IdFuncion = idFuncion,
                             IdUsuario = idUsuario,
                             Asiento = asiento,
-                            Precio = precioUnitario, // Precio individual
-                            FechaVenta = DateTime.Now
+                            Precio = precioUnitario,
+                            FechaVenta = DateTime.Now,
+                            MetodoPago = metodoPago
                         };
 
                         _db.Tickets.Add(nuevoTicket);
@@ -70,7 +76,7 @@ namespace CapaNegocio
                 catch (Exception ex)
                 {
                     transaction.Rollback();
-                    mensaje = "Error al procesar la venta: " + ex.Message;
+                    mensaje = "Error al registrar la venta " + ex.Message;
                     return false;
                 }
             }

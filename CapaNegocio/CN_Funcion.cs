@@ -1,79 +1,132 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using CapaDatos;
+﻿using CapaDatos;
 using CapaEntidad;
 using CapaNegocio.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CapaNegocio
 {
-    public class CN_Funcion : ICN_Funcion // Implementar interfaz
+    public class CN_Funcion : ICN_Funcion
     {
         private readonly BDContexto _db;
 
-        // CAMBIO: Recibimos el contexto ya creado por el contenedor
         public CN_Funcion(BDContexto db)
         {
             _db = db;
         }
 
-        // Listar funciones incluyendo los datos de Pelicula y Sala (Include)
-        public List<Funcion> Listar()
+        // 1. LISTAR POR FECHA (Optimizado para la vista diaria)
+        public async Task<List<Funcion>> ListarPorFechaAsync(DateTime fecha)
         {
-            return _db.Funciones
-                          .Include(f => f.Sala)
-                          .Include(f => f.Pelicula)
-                          .AsNoTracking()
-                          .ToList();
+            try
+            {
+                return await _db.Funciones
+                    .Include(f => f.Pelicula)
+                    .Include(f => f.Sala)
+                    .Where(f => f.Estado == true && f.FechaHoraInicio.Date == fecha.Date)
+                    .OrderBy(f => f.FechaHoraInicio)
+                    .AsNoTracking() // Mejora rendimiento solo lectura
+                    .ToListAsync();
+            }
+            catch
+            {
+                return new List<Funcion>();
+            }
         }
 
-        public string Guardar(Funcion obj)
+        // 2. LISTAR TODO (General)
+        public async Task<List<Funcion>> ListarTodoAsync()
         {
-            // 1. Validar precio
-            if (obj.PrecioTicket <= 0) return "El precio debe ser mayor a 0.";
+            return await _db.Funciones
+                .Include(f => f.Pelicula)
+                .Include(f => f.Sala)
+                .Where(f => f.Estado == true)
+                .OrderByDescending(f => f.FechaHoraInicio)
+                .AsNoTracking()
+                .ToListAsync();
+        }
 
-            // 2. Calcular hora fin (Inicio + Duración de la peli + 15 min limpieza)
-            var pelicula = _db.Peliculas.Find(obj.IdPelicula);
-            if (pelicula == null) return "Película no encontrada.";
+        // 3. CREAR FUNCIÓN (El núcleo de la lógica)
+        public async Task<(bool Exito, string Mensaje)> CrearFuncionAsync(Funcion nuevaFuncion)
+        {
+            // A. Validaciones básicas de datos
+            if (nuevaFuncion.PrecioTicket <= 0)
+                return (false, "El precio del ticket debe ser mayor a 0.");
 
-            obj.FechaHoraFin = obj.FechaHoraInicio.AddMinutes(pelicula.DuracionMinutos + 15);
-
-            // 3. Validar que la sala no esté ocupada en ese horario
-            if (ExisteSuperposicion(obj.IdSala, obj.FechaHoraInicio, obj.FechaHoraFin))
-            {
-                return "¡Conflicto! La sala está ocupada en ese horario.";
-            }
+            if (string.IsNullOrEmpty(nuevaFuncion.Formato) || string.IsNullOrEmpty(nuevaFuncion.Idioma))
+                return (false, "Debe especificar el Formato (2D/3D) y el Idioma.");
 
             try
             {
-                _db.Funciones.Add(obj);
-                _db.SaveChanges();
-                return "Función programada correctamente.";
+                // B. Obtener datos de la película para calcular duración
+                var pelicula = await _db.Peliculas.FindAsync(nuevaFuncion.IdPelicula);
+                if (pelicula == null)
+                    return (false, "Error: La película seleccionada no existe.");
+
+                // C. Calcular Hora de Finalización
+                // Fórmula: Inicio + Duración Película + 15 min (Limpieza/Trailers)
+                DateTime inicio = nuevaFuncion.FechaHoraInicio;
+                DateTime fin = inicio.AddMinutes(pelicula.DuracionMinutos + 15);
+
+                nuevaFuncion.FechaHoraFin = fin;
+
+                // D. VALIDAR SUPERPOSICIÓN EN BD
+                // Verificamos si existe alguna función en la MISMA SALA que choque con este rango.
+                // Lógica de intersección: (StartA < EndB) y (EndA > StartB)
+                bool salaOcupada = await _db.Funciones
+                    .AnyAsync(f => f.IdSala == nuevaFuncion.IdSala
+                                && f.Estado == true // Solo funciones activas
+                                && f.Id != nuevaFuncion.Id // Excluirse a sí misma (por si editamos a futuro)
+                                && inicio < f.FechaHoraFin
+                                && fin > f.FechaHoraInicio);
+
+                if (salaOcupada)
+                {
+                    // Buscamos cuál es la función que estorba para dar un mensaje detallado
+                    var conflicto = await _db.Funciones
+                        .Include(f => f.Pelicula)
+                        .Where(f => f.IdSala == nuevaFuncion.IdSala
+                               && f.Estado == true
+                               && inicio < f.FechaHoraFin
+                               && fin > f.FechaHoraInicio)
+                        .FirstAsync();
+
+                    return (false, $"Conflicto: La sala está ocupada por '{conflicto.Pelicula.Titulo}' de {conflicto.FechaHoraInicio:HH:mm} a {conflicto.FechaHoraFin:HH:mm}.");
+                }
+
+                // E. Guardar
+                nuevaFuncion.Estado = true; // Aseguramos estado activo
+                _db.Funciones.Add(nuevaFuncion);
+                await _db.SaveChangesAsync();
+
+                return (true, "Función programada correctamente.");
             }
             catch (Exception ex)
             {
-                return "Error: " + ex.Message;
+                return (false, $"Error interno al guardar: {ex.Message}");
             }
         }
 
-        // Lógica clave: Verifica si el nuevo horario choca con uno existente
-        private bool ExisteSuperposicion(int idSala, DateTime inicio, DateTime fin)
+        // 4. ELIMINAR (Baja Lógica)
+        public async Task<bool> EliminarFuncionAsync(int id)
         {
-            return _db.Funciones
-                .Any(f => f.IdSala == idSala
-                       && f.Estado == true
-                       && inicio < f.FechaHoraFin
-                       && fin > f.FechaHoraInicio);
-        }
-
-        public void Eliminar(int id)
-        {
-            var funcion = _db.Funciones.Find(id);
-            if (funcion != null)
+            try
             {
-                funcion.Estado = false;
-                _db.SaveChanges();
+                var funcion = await _db.Funciones.FindAsync(id);
+                if (funcion != null)
+                {
+                    funcion.Estado = false; // Soft Delete
+                    await _db.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+            catch
+            {
+                return false;
             }
         }
     }

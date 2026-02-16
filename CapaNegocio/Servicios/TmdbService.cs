@@ -41,10 +41,11 @@ namespace CapaNegocio.Servicios
             return new List<PeliculaBusqueda>();
         }
 
+        // CapaNegocio/Servicios/TmdbService.cs
         public async Task<DetallePelicula> ObtenerDetallePeliculaAsync(int idTmdb)
         {
-            // CAMBIO 3: Igual aquí, usamos la instancia compartida
-            string url = $"{BaseUrl}/movie/{idTmdb}?api_key={_apiKey}&language=es-ES&append_to_response=credits";
+            // Agregamos release_dates a la consulta
+            string url = $"{BaseUrl}/movie/{idTmdb}?api_key={_apiKey}&language=es-ES&append_to_response=credits,release_dates";
 
             var response = await _httpClient.GetAsync(url).ConfigureAwait(false);
 

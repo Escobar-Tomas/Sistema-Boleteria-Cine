@@ -70,6 +70,12 @@ namespace CapaPresentacion_WPF.ViewModels
         }
 
         [RelayCommand]
+        public void MostrarReportes()
+        {
+            VistaActual = App.ServiceProvider.GetRequiredService<ReportesViewModel>();
+        }
+
+        [RelayCommand]
         public void CerrarSesion()
         {
             // Lógica opcional para cerrar la ventana actual y abrir el Login

@@ -1,0 +1,96 @@
+﻿<UserControl x:Class="CapaPresentacion_WPF.Vistas.VistaReportes"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="1000">
+
+    <Grid Margin="20" Background="#F4F4F4">
+        <TabControl BorderThickness="0" Background="Transparent">
+
+            <TabItem Header="💰 Arqueo de Caja" FontSize="14" Padding="10">
+                <Grid Margin="0,15,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                        <TextBlock Text="Fecha de Cierre:" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,10,0"/>
+                        <DatePicker SelectedDate="{Binding FechaArqueo}" Width="150" VerticalContentAlignment="Center"/>
+                        <Button Content="Consultar" Command="{Binding CargarArqueoCommand}" Margin="10,0,0,0" Padding="15,5" Background="#2C3E50" Foreground="White"/>
+                    </StackPanel>
+
+                    <Grid Grid.Row="1" Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Background="#4CAF50" CornerRadius="8" Padding="15" Margin="0,0,10,0">
+                            <StackPanel>
+                                <TextBlock Text="Total Recaudado" Foreground="White" FontSize="14"/>
+                                <TextBlock Text="{Binding ResumenCaja.TotalGeneral, StringFormat='${0:N0}'}" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="1" Background="#009688" CornerRadius="8" Padding="15" Margin="0,0,10,0">
+                            <StackPanel>
+                                <TextBlock Text="Efectivo" Foreground="White" FontSize="14"/>
+                                <TextBlock Text="{Binding ResumenCaja.TotalEfectivo, StringFormat='${0:N0}'}" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2" Background="#607D8B" CornerRadius="8" Padding="15">
+                            <StackPanel>
+                                <TextBlock Text="Tickets Vendidos" Foreground="White" FontSize="14"/>
+                                <TextBlock Text="{Binding ResumenCaja.CantidadTickets}" Foreground="White" FontSize="28" FontWeight="Bold"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <GroupBox Grid.Row="2" Header="Últimas Ventas del Día" Background="White" BorderBrush="#DDD">
+                        <DataGrid ItemsSource="{Binding ResumenCaja.UltimasVentas}" AutoGenerateColumns="False" IsReadOnly="True" GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Hora" Binding="{Binding Hora}" Width="60"/>
+                                <DataGridTextColumn Header="Película" Binding="{Binding Pelicula}" Width="*"/>
+                                <DataGridTextColumn Header="Pago" Binding="{Binding MetodoPago}" Width="100"/>
+                                <DataGridTextColumn Header="Monto" Binding="{Binding Monto, StringFormat='${0:N0}'}" Width="80" FontWeight="Bold"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="📊 Ranking y Estadísticas" FontSize="14" Padding="10">
+                <Grid Margin="0,15,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                        <TextBlock Text="Desde:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <DatePicker SelectedDate="{Binding FechaDesde}" Width="120"/>
+
+                        <TextBlock Text="Hasta:" VerticalAlignment="Center" Margin="15,0,5,0"/>
+                        <DatePicker SelectedDate="{Binding FechaHasta}" Width="120"/>
+
+                        <Button Content="Generar Reporte" Command="{Binding CargarEstadisticasCommand}" Margin="15,0,0,0" Padding="15,5" Background="#1976D2" Foreground="White"/>
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding TopPeliculas}" AutoGenerateColumns="False" IsReadOnly="True" Background="White" RowHeight="40">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Película" Binding="{Binding Titulo}" Width="*" FontWeight="SemiBold"/>
+                            <DataGridTextColumn Header="Entradas Vendidas" Binding="{Binding TotalEntradas}" Width="150"/>
+                            <DataGridTextColumn Header="Ingresos Totales" Binding="{Binding TotalIngresos, StringFormat='${0:N0}'}" Width="150" FontWeight="Bold" Foreground="Green"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+        </TabControl>
+    </Grid>
+</UserControl>

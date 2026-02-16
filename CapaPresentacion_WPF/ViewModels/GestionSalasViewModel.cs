@@ -3,9 +3,8 @@ using CapaNegocio.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace CapaPresentacion_WPF.ViewModels
@@ -14,11 +13,11 @@ namespace CapaPresentacion_WPF.ViewModels
     {
         private readonly ICN_Sala _servicioSala;
 
-        // 1. DECLARACIÓN DE PROPIEDADES
-        // El atributo [ObservableProperty] generará automáticamente la propiedad "ListaSalas"
+        // Propiedades de la Lista
         [ObservableProperty]
-        private ObservableCollection<Sala> _listaSalas;
+        private ObservableCollection<Sala> _listaSalas = new ObservableCollection<Sala>();
 
+        // Propiedades del Formulario
         [ObservableProperty]
         private Sala _salaSeleccionada;
 
@@ -30,37 +29,35 @@ namespace CapaPresentacion_WPF.ViewModels
         [NotifyPropertyChangedFor(nameof(CapacidadCalculada))]
         private int _columnas;
 
-        // Propiedad calculada para la interfaz
         public int CapacidadCalculada => Filas * Columnas;
 
-        // 2. CONSTRUCTOR
         public GestionSalasViewModel(ICN_Sala servicioSala)
         {
             _servicioSala = servicioSala;
-
-            // Inicializamos la colección para que no sea nula antes de cargar
-            ListaSalas = new ObservableCollection<Sala>();
-
-            CargarSalas();
+            // Carga inicial asíncrona (fire and forget seguro en constructor)
+            _ = CargarSalas();
             Limpiar();
         }
 
-        // 3. MÉTODOS DE LÓGICA
-        private void CargarSalas()
+        // Método de Carga Asíncrono
+        public async Task CargarSalas()
         {
             try
             {
-                // Obtenemos la lista desde la capa de negocio
-                var lista = _servicioSala.Listar();
-                ListaSalas = new ObservableCollection<Sala>(lista);
+                var lista = await _servicioSala.ListarAsync();
+                ListaSalas.Clear();
+                foreach (var s in lista)
+                {
+                    ListaSalas.Add(s);
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Manejo de error silencioso o log
+                MessageBox.Show($"Error al cargar salas: {ex.Message}");
             }
         }
 
-        // Este método se dispara automáticamente gracias a CommunityToolkit cuando cambia la selección
+        // Al seleccionar una sala de la lista, llenamos el formulario
         partial void OnSalaSeleccionadaChanged(Sala value)
         {
             if (value != null)
@@ -70,47 +67,81 @@ namespace CapaPresentacion_WPF.ViewModels
             }
             else
             {
-                Filas = 0;
-                Columnas = 0;
+                // Si se deselecciona, limpiamos (opcional, o mantener último valor)
             }
         }
 
-        // 4. COMANDOS
         [RelayCommand]
-        private void Guardar()
+        private async Task Guardar()
         {
-            if (SalaSeleccionada == null) return;
+            // Si es nueva sala (no seleccionada de la lista), creamos una instancia
+            if (SalaSeleccionada == null)
+            {
+                SalaSeleccionada = new Sala();
+            }
 
-            // Sincronizamos los valores del formulario al objeto
+            // Mapeamos datos del formulario al objeto
             SalaSeleccionada.Filas = Filas;
             SalaSeleccionada.Columnas = Columnas;
-            SalaSeleccionada.Capacidad = CapacidadCalculada;
+            // El nombre debe venir bindeado directamente a SalaSeleccionada.Nombre en la vista,
+            // o puedes tener una propiedad separada 'NombreSala' en el VM.
+            // Asumiré que en la Vista el TextBox bindea a SalaSeleccionada.Nombre
 
-            string mensaje = _servicioSala.Guardar(SalaSeleccionada);
-
-            if (mensaje.Contains("Éxito") || mensaje.Contains("exitosa"))
+            if (string.IsNullOrWhiteSpace(SalaSeleccionada.Nombre))
             {
-                CargarSalas();
-                Limpiar();
+                MessageBox.Show("Ingrese un nombre para la sala.");
+                return;
+            }
+
+            (bool Exito, string Mensaje) resultado;
+
+            if (SalaSeleccionada.Id == 0)
+            {
+                // CREAR
+                resultado = await _servicioSala.CrearAsync(SalaSeleccionada);
             }
             else
             {
-                // Aquí atrapamos los errores como "Ya existe una sala..." o validaciones de tamaño
-                MessageBox.Show(mensaje, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                // EDITAR
+                resultado = await _servicioSala.EditarAsync(SalaSeleccionada);
+            }
+
+            MessageBox.Show(resultado.Mensaje);
+
+            if (resultado.Exito)
+            {
+                await CargarSalas();
+                Limpiar();
+            }
+        }
+
+        [RelayCommand]
+        private async Task Eliminar(Sala sala)
+        {
+            if (sala == null) return;
+
+            var confirm = MessageBox.Show($"¿Eliminar la sala '{sala.Nombre}'?", "Confirmar", MessageBoxButton.YesNo);
+            if (confirm == MessageBoxResult.Yes)
+            {
+                bool exito = await _servicioSala.EliminarAsync(sala.Id);
+                if (exito)
+                {
+                    MessageBox.Show("Sala eliminada.");
+                    await CargarSalas();
+                    Limpiar();
+                }
+                else
+                {
+                    MessageBox.Show("No se pudo eliminar la sala. Verifique que no tenga funciones futuras.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
             }
         }
 
         [RelayCommand]
         private void Limpiar()
         {
-            SalaSeleccionada = new Sala
-            {
-                Nombre = string.Empty,
-                Estado = true,
-                Filas = 0,
-                Columnas = 0,
-                Capacidad = 0
-            };
+            // Reseteamos el objeto para modo "Crear"
+            SalaSeleccionada = new Sala { Id = 0, Nombre = "", Estado = true };
             Filas = 0;
             Columnas = 0;
         }

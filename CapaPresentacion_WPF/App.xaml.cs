@@ -49,6 +49,7 @@ namespace CapaPresentacion_WPF
             services.AddTransient<ICN_Funcion, CN_Funcion>();
             services.AddTransient<ICN_Sala, CN_Sala>();
             services.AddTransient<ICN_Usuario, CN_Usuario>();
+            services.AddTransient<ICN_Reporte, CN_Reporte>();
 
 
             // D. Registrar ViewModels
@@ -57,6 +58,7 @@ namespace CapaPresentacion_WPF
             services.AddTransient<GestionSalasViewModel>();
             services.AddTransient<VentasViewModel>();
             services.AddTransient<GestionUsuariosViewModel>();
+            services.AddSingleton<ReportesViewModel>();
 
             // CONSTRUIR EL CONTENEDOR
             ServiceProvider = services.BuildServiceProvider();

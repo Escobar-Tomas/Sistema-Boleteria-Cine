@@ -3,12 +3,14 @@ using System.Collections.Generic;
 
 namespace CapaNegocio.ModelosAPI
 {
+    // Esta clase representa la respuesta global de la búsqueda
     public class ResultadoBusqueda
     {
         [JsonProperty("results")]
         public List<PeliculaBusqueda> Resultados { get; set; }
     }
 
+    // Esta clase representa cada película individual en la lista de búsqueda
     public class PeliculaBusqueda
     {
         [JsonProperty("id")]
@@ -23,9 +25,9 @@ namespace CapaNegocio.ModelosAPI
         [JsonProperty("release_date")]
         public string FechaLanzamiento { get; set; }
 
-        // Propiedad auxiliar para mostrar la imagen completa en WPF
+        // Propiedad calculada para mostrar la imagen en WPF
         public string FullPosterUrl => string.IsNullOrEmpty(PosterPath)
-            ? "https://via.placeholder.com/150"
+            ? "https://via.placeholder.com/150x225?text=Sin+Imagen"
             : $"https://image.tmdb.org/t/p/w500{PosterPath}";
     }
 }

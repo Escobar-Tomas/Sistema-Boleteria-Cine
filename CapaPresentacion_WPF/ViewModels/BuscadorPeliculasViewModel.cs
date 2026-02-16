@@ -86,7 +86,7 @@ namespace CapaPresentacion_WPF.ViewModels
                 MessageBox.Show(msj);
                 await CargarPeliculasLocales(); // Refrescar lista local
             }
-            catch (Exception ex) { MessageBox.Show($"Error: {ex.Message}"); }
+            catch (Exception ex) { MessageBox.Show($"Error CRÍTICO:\n{ex.Message}\n\nDetalle:{ex.InnerException?.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error); }
             finally { EstaCargando = false; }
         }
 
@@ -126,6 +126,17 @@ namespace CapaPresentacion_WPF.ViewModels
             {
                 MessageBox.Show($"Error al eliminar: {ex.Message}");
             }
+        }
+
+
+        [RelayCommand]
+        public void SeleccionarPelicula(Pelicula pelicula)
+        {
+            if (pelicula == null) return;
+
+            // Al asignar esto, gracias al Binding del Panel Lateral, 
+            // los campos de texto se llenarán automáticamente.
+            PeliculaSeleccionada = pelicula;
         }
     }
 }

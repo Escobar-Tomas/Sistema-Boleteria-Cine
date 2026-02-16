@@ -3,6 +3,9 @@ using CapaEntidad;
 using CapaNegocio.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
+using System.Linq; // Necesario para OrderBy
+using System.Threading.Tasks;
 
 namespace CapaNegocio
 {
@@ -15,108 +18,101 @@ namespace CapaNegocio
             _db = db;
         }
 
-        public List<Sala> Listar()
+        public async Task<List<Sala>> ListarAsync()
         {
-            return _db.Salas.Where(s => s.Estado == true).ToList();
+            // Retornamos todas las salas activas ordenadas por nombre
+            return await _db.Salas
+                .Where(s => s.Estado == true)
+                .OrderBy(s => s.Nombre)
+                .AsNoTracking()
+                .ToListAsync();
         }
 
-        public string Guardar(Sala obj)
+        public async Task<(bool Exito, string Mensaje)> CrearAsync(Sala sala)
         {
-            // 1. Validaciones básicas de entrada
-            if (obj.Filas <= 0 || obj.Columnas <= 0)
+            // 1. Validaciones básicas
+            if (string.IsNullOrWhiteSpace(sala.Nombre))
+                return (false, "El nombre de la sala es obligatorio.");
+
+            if (sala.Filas <= 0 || sala.Columnas <= 0)
+                return (false, "Las filas y columnas deben ser mayores a 0.");
+
+            // 2. Validación de duplicados (Async)
+            bool existe = await _db.Salas.AnyAsync(s => s.Nombre.ToLower() == sala.Nombre.ToLower() && s.Estado == true);
+            if (existe)
+                return (false, "Ya existe una sala activa con ese nombre.");
+
+            try
             {
-                return "Las filas y columnas deben ser mayores a 0.";
+                // Calcular capacidad total
+                sala.Capacidad = sala.Filas * sala.Columnas;
+                sala.Estado = true;
+
+                _db.Salas.Add(sala);
+                await _db.SaveChangesAsync();
+                return (true, "Sala creada correctamente.");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Error interno al guardar: {ex.Message}");
+            }
+        }
+
+        public async Task<(bool Exito, string Mensaje)> EditarAsync(Sala sala)
+        {
+            var salaDb = await _db.Salas
+                .Include(s => s.Funciones) // Traemos funciones para validar uso
+                .FirstOrDefaultAsync(s => s.Id == sala.Id);
+
+            if (salaDb == null) return (false, "La sala no existe.");
+
+            // Validar duplicado de nombre (excluyendo la actual)
+            if (salaDb.Nombre.ToLower() != sala.Nombre.ToLower())
+            {
+                bool existe = await _db.Salas.AnyAsync(s => s.Nombre.ToLower() == sala.Nombre.ToLower() && s.Id != sala.Id && s.Estado == true);
+                if (existe) return (false, "Ya existe otra sala con ese nombre.");
+            }
+
+            // VALIDACIÓN CRÍTICA: No cambiar tamaño si tiene funciones futuras
+            bool tieneFuncionesFuturas = salaDb.Funciones.Any(f => f.FechaHoraInicio > DateTime.Now && f.Estado == true);
+
+            // Si intenta cambiar filas/columnas y tiene funciones pendientes...
+            if ((salaDb.Filas != sala.Filas || salaDb.Columnas != sala.Columnas) && tieneFuncionesFuturas)
+            {
+                return (false, "No se puede modificar el tamaño de la sala porque tiene funciones programadas a futuro. Cancele las funciones primero.");
             }
 
             try
             {
-                // =======================================================
-                // CASO 1: CREAR NUEVA SALA (Id == 0)
-                // =======================================================
-                if (obj.Id == 0)
-                {
-                    // Validar nombre duplicado
-                    if (_db.Salas.Any(s => s.Nombre == obj.Nombre))
-                    {
-                        return "Ya existe una sala con ese nombre.";
-                    }
+                salaDb.Nombre = sala.Nombre;
+                salaDb.Filas = sala.Filas;
+                salaDb.Columnas = sala.Columnas;
+                salaDb.Capacidad = sala.Filas * sala.Columnas; // Recalcular siempre
 
-                    // Calcular capacidad automáticamente
-                    obj.Capacidad = obj.Filas * obj.Columnas;
-
-                    _db.Salas.Add(obj);
-                    _db.SaveChanges();
-
-                    return "Creación exitosa"; // Mensaje que espera tu ViewModel
-                }
-
-                // =======================================================
-                // CASO 2: EDITAR SALA EXISTENTE (Id != 0)
-                // =======================================================
-                else
-                {
-                    // Buscamos la sala y sus relaciones (Funciones)
-                    var salaDb = _db.Salas
-                                    .Include(s => s.Funciones) // <--- CLAVE: Traer historial
-                                    .FirstOrDefault(s => s.Id == obj.Id);
-
-                    if (salaDb == null)
-                    {
-                        return "La sala no existe.";
-                    }
-
-                    // Validar nombre duplicado (excluyendo la actual)
-                    if (_db.Salas.Any(s => s.Nombre == obj.Nombre && s.Id != obj.Id))
-                    {
-                        return "Ya existe otra sala con ese nombre.";
-                    }
-
-                    // ---------------------------------------------------
-                    // VALIDACIÓN DE INTEGRIDAD (Corrección solicitada)
-                    // ---------------------------------------------------
-
-                    // Detectamos si cambió el tamaño físico
-                    bool cambioDimensiones = salaDb.Filas != obj.Filas ||
-                                             salaDb.Columnas != obj.Columnas;
-
-                    // Detectamos si tiene funciones/historial
-                    bool tieneUso = salaDb.Funciones != null &&
-                                    salaDb.Funciones.Any();
-
-                    if (cambioDimensiones && tieneUso)
-                    {
-                        // Retornamos el error como string, tal cual pide la interfaz
-                        return "Error: No se puede modificar el tamaño de la sala porque ya tiene funciones asociadas.";
-                    }
-                    // ---------------------------------------------------
-
-                    // Si pasa la validación, actualizamos los datos
-                    salaDb.Nombre = obj.Nombre;
-                    salaDb.Filas = obj.Filas;
-                    salaDb.Columnas = obj.Columnas;
-                    salaDb.Capacidad = obj.Filas * obj.Columnas; // Recalcular
-                    salaDb.Estado = obj.Estado; // Tu propiedad es 'Estado', no 'Disponible'
-
-                    _db.Update(salaDb);
-                    _db.SaveChanges();
-
-                    return "Modificación exitosa"; // Mensaje que espera tu ViewModel
-                }
+                await _db.SaveChangesAsync();
+                return (true, "Sala actualizada correctamente.");
             }
             catch (Exception ex)
             {
-                return "Error: " + ex.Message;
+                return (false, $"Error al editar: {ex.Message}");
             }
         }
 
-        public void Eliminar(int id)
+        public async Task<bool> EliminarAsync(int id)
         {
-            var sala = _db.Salas.Find(id);
+            var sala = await _db.Salas.FindAsync(id);
             if (sala != null)
             {
-                sala.Estado = false; // Borrado lógico (mejor práctica que borrar el registro)
-                _db.SaveChanges();
+                // Validación opcional: No borrar si tiene funciones futuras
+                bool tieneFunciones = await _db.Funciones.AnyAsync(f => f.IdSala == id && f.FechaHoraInicio > DateTime.Now && f.Estado == true);
+
+                if (tieneFunciones) return false; // Bloquear borrado
+
+                sala.Estado = false; // Baja lógica
+                await _db.SaveChangesAsync();
+                return true;
             }
+            return false;
         }
     }
 }

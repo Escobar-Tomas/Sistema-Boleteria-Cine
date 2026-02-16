@@ -9,21 +9,31 @@ namespace CapaEntidad
         [Key]
         public int Id { get; set; }
 
-        // Relación con Película
+        // RELACIONES
         public int IdPelicula { get; set; }
         [ForeignKey("IdPelicula")]
         public virtual Pelicula Pelicula { get; set; }
 
-        // Relación con Sala
         public int IdSala { get; set; }
         [ForeignKey("IdSala")]
         public virtual Sala Sala { get; set; }
 
+        // DATOS DE HORARIO
         [Required]
         public DateTime FechaHoraInicio { get; set; }
 
-        // Calcularemos la hora fin sumando la duración de la película (útil para validar choques)
+        // Se calcula: Inicio + Duración Película + Tiempo Limpieza (opcional)
         public DateTime FechaHoraFin { get; set; }
+
+        // DATOS DE LA PROYECCIÓN 
+
+        [Required]
+        [StringLength(10)]
+        public string Formato { get; set; } // Ej: "2D", "3D", "IMAX"
+
+        [Required]
+        [StringLength(20)]
+        public string Idioma { get; set; } // Ej: "Doblada", "Subtitulada", "Original"
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]

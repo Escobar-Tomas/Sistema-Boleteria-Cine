@@ -2,14 +2,28 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:vm="clr-namespace:CapaPresentacion_WPF.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DataContext="{d:DesignInstance Type=vm:BuscadorPeliculasViewModel}"
-             d:DesignHeight="600" d:DesignWidth="1000" Background="Transparent">
+             d:DesignHeight="700" d:DesignWidth="1100" Background="#F0F0F0">
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <Style x:Key="BotonEstilo" TargetType="Button">
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Background" Value="#007ACC"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style x:Key="TextBoxEstilo" TargetType="TextBox">
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="20">
@@ -18,96 +32,71 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Catálogo de Películas" FontSize="22" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,20"/>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+            <TextBlock Text="Gestión de Películas" FontSize="24" FontWeight="Bold" Foreground="#333"/>
 
-        <ProgressBar IsIndeterminate="True" Height="2" VerticalAlignment="Top" Background="Transparent" Foreground="#3498DB"
-                     Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVis}}" Margin="0,-10,0,10"/>
+            <TextBlock Text=" Cargando..." Foreground="Orange" FontWeight="Bold" VerticalAlignment="Center" Margin="15,0,0,0"
+                       Visibility="{Binding EstaCargando, Converter={StaticResource BoolToVis}}"/>
+        </StackPanel>
 
-        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
-            <TabControl.Resources>
-                <Style TargetType="TabItem">
-                    <Setter Property="FontSize" Value="14"/>
-                    <Setter Property="FontWeight" Value="SemiBold"/>
-                    <Setter Property="Foreground" Value="#7F8C8D"/>
-                    <Setter Property="Padding" Value="15,10"/>
-                    <Setter Property="Background" Value="Transparent"/>
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="TabItem">
-                                <Grid>
-                                    <Border x:Name="Border" BorderBrush="Transparent" BorderThickness="0,0,0,3" Margin="0,0,10,0">
-                                        <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" HorizontalAlignment="Center" ContentSource="Header" Margin="10,5"/>
-                                    </Border>
-                                </Grid>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter TargetName="Border" Property="BorderBrush" Value="#3498DB"/>
-                                        <Setter Property="Foreground" Value="#3498DB"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </TabControl.Resources>
+        <TabControl Grid.Row="1" BorderThickness="0" Background="Transparent">
 
-            <TabItem Header="Mis Películas">
-                <Grid Margin="0,20,0,0">
+            <TabItem Header="Mis Películas" FontSize="14">
+                <Grid Margin="0,10,0,0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="3*"/>
                         <ColumnDefinition Width="1*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Background="White" CornerRadius="10" Margin="0,0,20,0" Padding="10">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="10" Direction="270" Color="#EAEAEA" ShadowDepth="2"/>
-                        </Border.Effect>
-                        <DataGrid ItemsSource="{Binding PeliculasLocales}" SelectedItem="{Binding PeliculaSeleccionada}"
-                                  AutoGenerateColumns="False" IsReadOnly="True" BorderThickness="0"
-                                  GridLinesVisibility="Horizontal" RowHeight="35" Background="White">
+                    <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,10,0">
+                        <ItemsControl ItemsSource="{Binding PeliculasLocales}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
 
-                            <DataGrid.Resources>
-                                <Style TargetType="DataGridColumnHeader">
-                                    <Setter Property="Background" Value="Transparent"/>
-                                    <Setter Property="Foreground" Value="#95A5A6"/>
-                                    <Setter Property="FontWeight" Value="SemiBold"/>
-                                    <Setter Property="Padding" Value="10,0"/>
-                                    <Setter Property="Height" Value="35"/>
-                                    <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                    <Setter Property="BorderBrush" Value="#E0E0E0"/>
-                                </Style>
-                            </DataGrid.Resources>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Width="160" Height="280" Margin="10" Background="White" CornerRadius="5" BorderBrush="#DDD" BorderThickness="1">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
 
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
-                                <DataGridTextColumn Header="Título" Binding="{Binding Titulo}" Width="*"/>
-                                <DataGridTextColumn Header="Duración" Binding="{Binding Duracion}" Width="80"/>
-                                <DataGridTemplateColumn Width="80">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Button Content="Eliminar" Background="Transparent" Foreground="#E74C3C" BorderThickness="0" Cursor="Hand"
-                                                    Command="{Binding DataContext.EliminarPeliculaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                    CommandParameter="{Binding}">
-                                                <Button.Template>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <Border Background="{TemplateBinding Background}">
-                                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                        </Border>
-                                                    </ControlTemplate>
-                                                </Button.Template>
-                                            </Button>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </Border>
+                                            <Image Source="{Binding PosterUrl}" Stretch="UniformToFill" Margin="2"/>
 
-                    <Border Grid.Column="1" Background="White" CornerRadius="10" Padding="20">
-                        <Border.Effect>
-                            <DropShadowEffect BlurRadius="10" Direction="270" Color="#EAEAEA" ShadowDepth="2"/>
-                        </Border.Effect>
-                        <Grid>
+                                            <Border Background="Black" Opacity="0.7" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="5" CornerRadius="3" Padding="5,2">
+                                                <TextBlock Text="{Binding Clasificacion}" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                                            </Border>
+
+                                            <StackPanel Grid.Row="1" Margin="5">
+                                                <TextBlock Text="{Binding Titulo}" FontWeight="Bold" TextTrimming="CharacterEllipsis" ToolTip="{Binding Titulo}"/>
+                                                <TextBlock Text="{Binding DuracionMinutos, StringFormat='Duración: {0} min'}" FontSize="11" Foreground="Gray"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,5">
+                                                <Button Content="Editar" FontSize="10" Padding="5,2" Margin="2" Background="#EEE" Foreground="Black"
+                                                        Command="{Binding DataContext.SeleccionarPeliculaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"/>          
+
+                                                <Button Content="Borrar" FontSize="10" Padding="5,2" Margin="2" Background="#FFCDD2" Foreground="#D32F2F"
+                                                        Command="{Binding DataContext.EliminarPeliculaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <Border Grid.Column="1" Background="White" BorderBrush="#DDD" BorderThickness="1" CornerRadius="5" Padding="15" VerticalAlignment="Top">
+                        <StackPanel>
+                            <TextBlock Text="Editar Película" FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+
                             <StackPanel>
                                 <StackPanel.Style>
                                     <Style TargetType="StackPanel">
@@ -120,32 +109,22 @@
                                     </Style>
                                 </StackPanel.Style>
 
-                                <TextBlock Text="Editar Película" FontSize="16" FontWeight="Bold" Margin="0,0,0,15" Foreground="#2C3E50"/>
+                                <TextBlock Text="Título:"/>
+                                <TextBox Text="{Binding PeliculaSeleccionada.Titulo, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxEstilo}"/>
 
-                                <TextBlock Text="Título" Foreground="#7F8C8D" Margin="0,0,0,5"/>
-                                <TextBox Text="{Binding PeliculaSeleccionada.Titulo, UpdateSourceTrigger=PropertyChanged}" Padding="5" Margin="0,0,0,15"/>
+                                <TextBlock Text="Sinopsis:"/>
+                                <TextBox Text="{Binding PeliculaSeleccionada.Sinopsis}" Height="60" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Style="{StaticResource TextBoxEstilo}"/>
 
-                                <TextBlock Text="Sinopsis" Foreground="#7F8C8D" Margin="0,0,0,5"/>
-                                <TextBox Text="{Binding PeliculaSeleccionada.Sinopsis, UpdateSourceTrigger=PropertyChanged}" 
-                                         TextWrapping="Wrap" Height="80" AcceptsReturn="True" Padding="5" Margin="0,0,0,15"/>
+                                <TextBlock Text="Duración (min):"/>
+                                <TextBox Text="{Binding PeliculaSeleccionada.DuracionMinutos}" Style="{StaticResource TextBoxEstilo}"/>
 
-                                <TextBlock Text="Duración (min)" Foreground="#7F8C8D" Margin="0,0,0,5"/>
-                                <TextBox Text="{Binding PeliculaSeleccionada.DuracionMinutos, UpdateSourceTrigger=PropertyChanged}" Padding="5" Margin="0,0,0,20"/>
+                                <TextBlock Text="Clasificación:"/>
+                                <TextBox Text="{Binding PeliculaSeleccionada.Clasificacion}" Style="{StaticResource TextBoxEstilo}"/>
 
-                                <Button Content="Guardar Cambios" Command="{Binding GuardarEdicionCommand}" 
-                                        Height="40" Background="#3498DB" Foreground="White" FontWeight="Bold" BorderThickness="0" Cursor="Hand">
-                                    <Button.Template>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}" CornerRadius="5">
-                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Button.Template>
-                                </Button>
+                                <Button Content="GUARDAR CAMBIOS" Command="{Binding GuardarEdicionCommand}" Style="{StaticResource BotonEstilo}"/>
                             </StackPanel>
 
-                            <TextBlock Text="Selecciona una película para ver detalles" Foreground="#BDC3C7" 
-                                       VerticalAlignment="Center" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center">
+                            <TextBlock Text="Selecciona una película de la izquierda para editarla." TextWrapping="Wrap" Foreground="Gray" FontStyle="Italic" Margin="0,20,0,0">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -157,65 +136,58 @@
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
-                        </Grid>
+                        </StackPanel>
                     </Border>
                 </Grid>
             </TabItem>
 
-            <TabItem Header="Importar de Internet (TMDB)">
-                <Grid Margin="0,20,0,0">
+            <TabItem Header="Importar de Internet (TMDB)" FontSize="14">
+                <Grid Margin="0,10,0,0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <Border Background="White" CornerRadius="25" Padding="5" Width="500" HorizontalAlignment="Left" Margin="0,0,0,20" BorderBrush="#E0E0E0" BorderThickness="1">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBox Text="{Binding TextoBusqueda, UpdateSourceTrigger=PropertyChanged}" Width="380" BorderThickness="0" VerticalContentAlignment="Center" Padding="15,10" Background="Transparent"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,15">
+                        <TextBlock Text="Buscar:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBox Width="300" Text="{Binding TextoBusqueda, UpdateSourceTrigger=PropertyChanged}" VerticalContentAlignment="Center" Padding="5"/>
+                        <Button Content="BUSCAR" Command="{Binding BuscarCommand}" Style="{StaticResource BotonEstilo}" Margin="10,0,0,0"/>
+                    </StackPanel>
 
-                            <Button Content="Buscar" Command="{Binding BuscarCommand}" Width="100" Background="#2C3E50" Foreground="White" BorderThickness="0" Height="36" Cursor="Hand">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" CornerRadius="20">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Button.Template>
-                            </Button>
-                        </StackPanel>
-                    </Border>
+                    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding ResultadosBusqueda}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
 
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding ResultadosBusqueda}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" BorderThickness="0" Background="Transparent" RowHeight="90">
-                        <DataGrid.Columns>
-                            <DataGridTemplateColumn Header="Póster" Width="80">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Image Source="{Binding FullPosterUrl}" Height="80" Stretch="Uniform" Margin="5"/>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="Título" Binding="{Binding Titulo}" Width="*" FontWeight="Bold"/>
-                            <DataGridTextColumn Header="Lanzamiento" Binding="{Binding FechaLanzamiento}" Width="120"/>
-                            <DataGridTemplateColumn Width="140">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Button Content="⬇ Importar" Command="{Binding DataContext.AgregarPeliculaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                                                CommandParameter="{Binding}" Background="#27AE60" Foreground="White" FontWeight="Bold" BorderThickness="0" HorizontalAlignment="Center" Cursor="Hand" Margin="0">
-                                            <Button.Template>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border Background="{TemplateBinding Background}" CornerRadius="5" Padding="15,8">
-                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                </ControlTemplate>
-                                            </Button.Template>
-                                        </Button>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Width="150" Margin="10" Background="White" BorderBrush="#DDD" BorderThickness="1" CornerRadius="5">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="220"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <Image Source="{Binding FullPosterUrl}" Stretch="UniformToFill"/>
+
+                                            <TextBlock Grid.Row="1" Text="{Binding Titulo}" FontWeight="Bold" TextWrapping="Wrap" TextAlignment="Center" Margin="5" FontSize="11"/>
+
+                                            <Button Grid.Row="2" Content="⬇ IMPORTAR" Background="#4CAF50"  Margin="5" Padding="5" Foreground="White" FontWeight="Bold" BorderThickness="0" Cursor="Hand"
+                                                    Command="{Binding DataContext.AgregarPeliculaCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
                 </Grid>
             </TabItem>
+
         </TabControl>
     </Grid>
 </UserControl>
