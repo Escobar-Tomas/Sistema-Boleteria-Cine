@@ -11,10 +11,11 @@ namespace CapaPresentacion_WPF.ViewModels
     public partial class SeleccionAsientosViewModel : ObservableObject
     {
         private readonly Sala _sala;
+        private readonly decimal _precioUnitario;
 
-        // Propiedades para dimensionar el UniformGrid
         public int Filas => _sala.Filas;
         public int Columnas => _sala.Columnas;
+        public string TituloSala => _sala.Nombre;
 
         public ObservableCollection<AsientoItem> ListaAsientos { get; set; } = new ObservableCollection<AsientoItem>();
 
@@ -23,7 +24,6 @@ namespace CapaPresentacion_WPF.ViewModels
 
         [ObservableProperty]
         private decimal _total = 0;
-        private decimal _precioUnitario;
 
         public System.Action<List<string>>? OnConfirmar { get; set; }
 
@@ -37,61 +37,106 @@ namespace CapaPresentacion_WPF.ViewModels
         private void GenerarMapa(List<string> ocupados)
         {
             ListaAsientos.Clear();
-            char letra = 'A';
-
             for (int i = 0; i < _sala.Filas; i++)
             {
+                char letraFila = (char)('A' + i);
                 for (int j = 1; j <= _sala.Columnas; j++)
                 {
-                    string codigo = $"{letra}{j}";
-                    ListaAsientos.Add(new AsientoItem(codigo, ocupados.Contains(codigo), this));
+                    string codigo = $"{letraFila}{j}";
+                    bool estaOcupado = ocupados != null && ocupados.Contains(codigo);
+                    ListaAsientos.Add(new AsientoItem(codigo, estaOcupado, this));
                 }
-                letra++;
             }
         }
 
-        public void Recalcular()
+        public void RecalcularTotal()
         {
-            var seleccionados = ListaAsientos.Where(x => x.Seleccionado).ToList();
-            ResumenSeleccion = $"{seleccionados.Count} Asientos ({string.Join(",", seleccionados.Select(x => x.Codigo))})";
-            Total = seleccionados.Count * _precioUnitario;
+            var seleccionados = ListaAsientos.Where(x => x.IsSelected).ToList();
+            int cantidad = seleccionados.Count;
+
+            Total = cantidad * _precioUnitario;
+
+            if (cantidad == 0)
+                ResumenSeleccion = "Ningún asiento seleccionado";
+            else
+                ResumenSeleccion = $"{cantidad} asientos: {string.Join(", ", seleccionados.Select(x => x.Codigo))}";
         }
 
         [RelayCommand]
         public void Confirmar()
         {
-            var seleccion = ListaAsientos.Where(x => x.Seleccionado).Select(x => x.Codigo).ToList();
-            if (seleccion.Count > 0) OnConfirmar?.Invoke(seleccion);
+            var seleccion = ListaAsientos.Where(x => x.IsSelected).Select(x => x.Codigo).ToList();
+            if (seleccion.Count > 0)
+            {
+                OnConfirmar?.Invoke(seleccion);
+            }
         }
     }
 
+    // 'partial' para evitar conflictos con el generador MVVM
     public partial class AsientoItem : ObservableObject
     {
         public string Codigo { get; }
-        public bool Ocupado { get; }
+        public bool IsOccupied { get; }
         private readonly SeleccionAsientosViewModel _padre;
 
-        [ObservableProperty]
-        private bool _seleccionado;
+        // Uso explícito de 'System.Windows.Media.Color' para evitar ambigüedad
+        private static readonly Brush ColorLibre = new SolidColorBrush(System.Windows.Media.Color.FromRgb(52, 152, 219));
+        private static readonly Brush ColorOcupado = new SolidColorBrush(System.Windows.Media.Color.FromRgb(231, 76, 60));
+        private static readonly Brush ColorSeleccionado = new SolidColorBrush(System.Windows.Media.Color.FromRgb(46, 204, 113));
 
-        [ObservableProperty]
-        private Brush _color;
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                if (SetProperty(ref _isSelected, value))
+                {
+                    ActualizarColor();
+                    _padre.RecalcularTotal();
+                }
+            }
+        }
+
+        private Brush _backgroundColor;
+        public Brush BackgroundColor
+        {
+            get => _backgroundColor;
+            set => SetProperty(ref _backgroundColor, value);
+        }
+
+        private Brush _foregroundColor;
+        public Brush ForegroundColor
+        {
+            get => _foregroundColor;
+            set => SetProperty(ref _foregroundColor, value);
+        }
+
+        public RelayCommand ToggleSelectionCommand { get; }
 
         public AsientoItem(string codigo, bool ocupado, SeleccionAsientosViewModel padre)
         {
             Codigo = codigo;
-            Ocupado = ocupado;
+            IsOccupied = ocupado;
             _padre = padre;
-            Color = Ocupado ? Brushes.Red : Brushes.Gray; // Rojo si ocupado, Gris si libre
+
+            ToggleSelectionCommand = new RelayCommand(ToggleSelection);
+
+            // Estado inicial
+            BackgroundColor = IsOccupied ? ColorOcupado : ColorLibre;
+            ForegroundColor = Brushes.White;
         }
 
-        [RelayCommand]
-        public void Click()
+        private void ToggleSelection()
         {
-            if (Ocupado) return;
-            Seleccionado = !Seleccionado;
-            Color = Seleccionado ? Brushes.Green : Brushes.Gray; // Verde si selecciono
-            _padre.Recalcular();
+            if (IsOccupied) return;
+            IsSelected = !IsSelected;
+        }
+
+        private void ActualizarColor()
+        {
+            BackgroundColor = IsSelected ? ColorSeleccionado : ColorLibre;
         }
     }
 }

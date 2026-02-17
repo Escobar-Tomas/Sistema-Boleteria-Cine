@@ -32,7 +32,7 @@ namespace CapaPresentacion_WPF.ViewModels
         {
             try
             {
-                resumenCaja = await _negocioReporte.ObtenerArqueoDiarioAsync(fechaArqueo);
+                ResumenCaja = await _negocioReporte.ObtenerArqueoDiarioAsync(fechaArqueo);
             }
             catch (Exception ex)
             {

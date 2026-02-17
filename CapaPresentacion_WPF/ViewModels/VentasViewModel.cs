@@ -2,8 +2,6 @@
 using CommunityToolkit.Mvvm.Input;
 using CapaNegocio.Interfaces;
 using CapaEntidad;
-// Asegúrate de tener este using para la ventana de asientos
-// using CapaPresentacion_WPF.Vistas; 
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Linq;
@@ -23,7 +21,7 @@ namespace CapaPresentacion_WPF.ViewModels
         public int IdUsuarioActual { get; set; } = 1;
 
         [ObservableProperty]
-        private string metodoPago = "Efectivo"; // Valor por defecto
+        private string metodoPago = "Efectivo";
 
         public List<string> ListaMetodosPago { get; } = new List<string>
         {
@@ -33,25 +31,32 @@ namespace CapaPresentacion_WPF.ViewModels
             "Mercado Pago"
         };
 
-        // --- COLECCIONES ---
-        // Renombramos a FuncionesDelDia para ser más específicos
         public ObservableCollection<Funcion> FuncionesDelDia { get; set; } = new ObservableCollection<Funcion>();
 
-        // --- FILTROS ---
         [ObservableProperty]
         private DateTime fechaVenta = DateTime.Today;
 
-        // --- SELECCIÓN ---
         [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(IniciarVentaCommand))]
+        [NotifyCanExecuteChangedFor(nameof(IniciarSeleccionCommand))]
         private Funcion funcionSeleccionada;
+
+        // ---  PROPIEDADES PARA EL DETALLE DE VENTA ---
+
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(ConfirmarVentaCommand))]
+        private string _textoAsientosSeleccionados = "Ninguno";
+
+        [ObservableProperty]
+        private decimal _totalVenta = 0;
+
+        // Guardamos los asientos en memoria temporalmente hasta confirmar
+        private List<string> _asientosTemporales = new List<string>();
+
 
         public VentasViewModel(ICN_Funcion negocioFuncion, ICN_Ticket negocioTicket)
         {
             _negocioFuncion = negocioFuncion;
             _negocioTicket = negocioTicket;
-
-            // Iniciamos carga asíncrona
             _ = CargarFunciones();
         }
 
@@ -60,16 +65,9 @@ namespace CapaPresentacion_WPF.ViewModels
         {
             try
             {
-                // CORRECCIÓN PRINCIPAL: Usamos el método asíncrono y filtramos por fecha
-                var lista = await _negocioFuncion.ListarPorFechaAsync(fechaVenta);
-
+                var lista = await _negocioFuncion.ListarPorFechaAsync(FechaVenta);
                 FuncionesDelDia.Clear();
-                foreach (var f in lista)
-                {
-                    // Opcional: Filtrar funciones que ya pasaron hace mucho (ej: más de 2 horas)
-                    // if (f.FechaHoraInicio > DateTime.Now.AddHours(-2)) 
-                    FuncionesDelDia.Add(f);
-                }
+                foreach (var f in lista) FuncionesDelDia.Add(f);
             }
             catch (Exception ex)
             {
@@ -77,82 +75,103 @@ namespace CapaPresentacion_WPF.ViewModels
             }
         }
 
-        // Método auxiliar para seleccionar desde la UI (Botón en tarjeta)
         [RelayCommand]
         public void SeleccionarFuncion(Funcion funcion)
         {
             FuncionSeleccionada = funcion;
+            // Al cambiar de función, limpiamos la selección anterior
+            LimpiarSeleccion();
         }
 
-        private bool PuedeIniciarVenta() => FuncionSeleccionada != null;
+        private bool PuedeIniciarSeleccion() => FuncionSeleccionada != null;
 
-        [RelayCommand(CanExecute = nameof(PuedeIniciarVenta))]
-        public void IniciarVenta()
+        // PASO 1: Abrir la ventana solo para seleccionar
+        [RelayCommand(CanExecute = nameof(PuedeIniciarSeleccion))]
+        public void IniciarSeleccion()
         {
             if (FuncionSeleccionada == null) return;
 
-            // Validar Sala
             if (FuncionSeleccionada.Sala == null)
             {
-                MessageBox.Show("Error de datos: La función no tiene Sala asignada.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Error: La función no tiene Sala asignada.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
             try
             {
-                // 1. Obtener asientos ocupados (Asumimos que Ticket sigue siendo síncrono por ahora)
                 var ocupados = _negocioTicket.ObtenerAsientosOcupados(FuncionSeleccionada.Id);
-
-                // 2. Instanciar VM y Ventana de Asientos (Tu lógica original)
-                // Nota: Asegúrate de tener referenciada la clase SeleccionAsientosViewModel
-                /* Si te da error aquí, verifica que SeleccionAsientosViewModel reciba los parámetros correctos.
-                   Asumo constructor: (Sala sala, decimal precio, List<string> ocupados)
-                */
                 var vmSeleccion = new SeleccionAsientosViewModel(FuncionSeleccionada.Sala, FuncionSeleccionada.PrecioTicket, ocupados);
-
                 var ventana = new SeleccionAsientosWindow { DataContext = vmSeleccion, Owner = Application.Current.MainWindow };
 
                 vmSeleccion.OnConfirmar = (asientos) => {
                     ventana.DialogResult = true;
                     ventana.Close();
-                    ProcesarVenta(asientos);
-                 };
+
+                    ActualizarResumenVenta(asientos);
+                };
 
                 ventana.ShowDialog();
-
-                // COMO NO TENGO TU CLASE DE ASIENTOS, DEJO ESTE PLACEHOLDER:
-                // MessageBox.Show($"Aquí se abriría la selección de asientos para '{FuncionSeleccionada.Pelicula.Titulo}'.\nImplementa la llamada a tu ventana SeleccionAsientosWindow aquí.", "Flujo de Venta");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al iniciar venta: {ex.Message}");
+                MessageBox.Show($"Error al abrir selección: {ex.Message}");
             }
         }
 
-        public void ProcesarVenta(List<string> asientos)
+        private void ActualizarResumenVenta(List<string> asientos)
         {
-            if (asientos == null || !asientos.Any()) return;
+            _asientosTemporales = asientos;
+
+            if (asientos != null && asientos.Any())
+            {
+                TextoAsientosSeleccionados = string.Join(", ", asientos);
+                TotalVenta = asientos.Count * FuncionSeleccionada.PrecioTicket;
+            }
+            else
+            {
+                LimpiarSeleccion();
+            }
+            // Notificamos al botón de confirmar que ya puede activarse
+            ConfirmarVentaCommand.NotifyCanExecuteChanged();
+        }
+
+        private bool PuedeConfirmarVenta() => _asientosTemporales != null && _asientosTemporales.Any();
+
+        // El botón final que guarda en la BD
+        [RelayCommand(CanExecute = nameof(PuedeConfirmarVenta))]
+        public void ConfirmarVenta()
+        {
+            if (!PuedeConfirmarVenta()) return;
 
             string mensaje;
             bool exito = _negocioTicket.RegistrarVenta(
                 FuncionSeleccionada.Id,
                 IdUsuarioActual,
-                asientos,
+                _asientosTemporales,
                 FuncionSeleccionada.PrecioTicket,
-                metodoPago,
+                MetodoPago, // Usamos la propiedad mayúscula generada por ObservableProperty
                 out mensaje
             );
 
             if (exito)
             {
-                MessageBox.Show($"¡Venta Exitosa!\nTickets: {asientos.Count}\nTotal: ${asientos.Count * FuncionSeleccionada.PrecioTicket}", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
-                FuncionSeleccionada = null; // Limpiar selección
-                metodoPago = "Efectivo";
+                MessageBox.Show($"¡Venta Exitosa!\nTickets: {_asientosTemporales.Count}\nTotal: ${TotalVenta}", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                LimpiarSeleccion();
+                _ = CargarFunciones(); // Recargar para actualizar disponibilidad si fuera necesario
             }
             else
             {
                 MessageBox.Show($"Error al registrar venta: {mensaje}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        private void LimpiarSeleccion()
+        {
+            _asientosTemporales.Clear();
+            TextoAsientosSeleccionados = "Ninguno";
+            TotalVenta = 0;
+            MetodoPago = "Efectivo";
+            ConfirmarVentaCommand.NotifyCanExecuteChanged();
         }
     }
 }

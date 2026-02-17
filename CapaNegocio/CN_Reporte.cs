@@ -31,19 +31,29 @@ namespace CapaNegocio
                 CantidadTickets = ticketsDelDia.Count,
                 TotalGeneral = ticketsDelDia.Sum(t => t.Precio),
 
-                // Agrupamos por texto (Asegúrate de usar los mismos strings que en VentasViewModel)
-                TotalEfectivo = ticketsDelDia.Where(t => t.MetodoPago == "Efectivo").Sum(t => t.Precio),
-                TotalTarjeta = ticketsDelDia.Where(t => t.MetodoPago.Contains("Tarjeta")).Sum(t => t.Precio),
+                // LÓGICA CORREGIDA Y PROTEGIDA CONTRA NULOS
+                TotalEfectivo = ticketsDelDia
+                    .Where(t => t.MetodoPago != null && t.MetodoPago == "Efectivo")
+                    .Sum(t => t.Precio),
 
-                // Tomamos las últimas 20 ventas para mostrar en grilla
+                TotalTarjeta = ticketsDelDia
+                    .Where(t => t.MetodoPago != null && t.MetodoPago.Contains("Tarjeta"))
+                    .Sum(t => t.Precio),
+
+                // NUEVO CÁLCULO PARA MERCADO PAGO
+                TotalMercadoPago = ticketsDelDia
+                    .Where(t => t.MetodoPago != null && t.MetodoPago.Contains("Mercado"))
+                    .Sum(t => t.Precio),
+
+                // Tomamos las últimas 20 ventas
                 UltimasVentas = ticketsDelDia
                     .OrderByDescending(t => t.FechaVenta)
                     .Take(20)
                     .Select(t => new DetalleVentaDto
                     {
                         Hora = t.FechaVenta.ToString("HH:mm"),
-                        Pelicula = t.Funcion.Pelicula.Titulo,
-                        MetodoPago = t.MetodoPago,
+                        Pelicula = t.Funcion?.Pelicula?.Titulo ?? "Desconocida", // Protección extra
+                        MetodoPago = t.MetodoPago ?? "N/A",
                         Monto = t.Precio
                     }).ToList()
             };

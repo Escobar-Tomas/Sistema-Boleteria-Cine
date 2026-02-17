@@ -73,77 +73,73 @@
             </ScrollViewer>
         </Grid>
 
-        <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="20" BorderBrush="#DDD" BorderThickness="1">
-            <StackPanel>
-                <TextBlock Text="Resumen de Venta" FontSize="20" FontWeight="Bold" Foreground="#2C3E50" Margin="0,0,0,20" HorizontalAlignment="Center"/>
+        <Border Grid.Column="1" Margin="10,0,0,0" Background="White" CornerRadius="8" Padding="20">
+            <Border.Effect>
+                <DropShadowEffect Color="#DDD" BlurRadius="10" ShadowDepth="2"/>
+            </Border.Effect>
 
-                <TextBlock Text="Película:" Foreground="Gray" FontWeight="SemiBold"/>
-                <TextBlock Text="{Binding FuncionSeleccionada.Pelicula.Titulo, TargetNullValue='Seleccione una función'}" 
-                           FontSize="16" FontWeight="Bold" TextWrapping="Wrap" Margin="0,0,0,15"/>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                <TextBlock Text="Horario:" Foreground="Gray" FontWeight="SemiBold"/>
-                <TextBlock Text="{Binding FuncionSeleccionada.FechaHoraInicio, StringFormat='dd/MM/yyyy - HH:mm hs', TargetNullValue='--/--/---- --:--'}" 
-                           FontSize="14" Margin="0,0,0,15"/>
+                <TextBlock Text="Resumen de Venta" FontSize="18" FontWeight="Bold" Foreground="#333" Margin="0,0,0,15"/>
 
-                <TextBlock Text="Sala y Formato:" Foreground="Gray" FontWeight="SemiBold"/>
-                <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-                    <TextBlock Text="{Binding FuncionSeleccionada.Sala.Nombre, TargetNullValue='---'}" FontWeight="Bold"/>
-                    <TextBlock Text=" ("/>
-                    <TextBlock Text="{Binding FuncionSeleccionada.Formato, TargetNullValue='-'}" Foreground="#007ACC"/>
-                    <TextBlock Text=")"/>
+                <StackPanel Grid.Row="1">
+                    <TextBlock Text="Película:" Foreground="#777" FontSize="12"/>
+                    <TextBlock Text="{Binding FuncionSeleccionada.Pelicula.Titulo, TargetNullValue='Seleccione una función'}" 
+                       FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Horario:" Foreground="#777" FontSize="12"/>
+                    <TextBlock Text="{Binding FuncionSeleccionada.HoraInicio, StringFormat='{}{0:hh\\:mm tt}'}" 
+                       FontSize="14" Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Sala:" Foreground="#777" FontSize="12"/>
+                    <TextBlock Text="{Binding FuncionSeleccionada.Sala.Nombre}" 
+                       FontSize="14" Margin="0,0,0,10"/>
+
+                    <Separator Margin="0,10"/>
+
+                    <TextBlock Text="Asientos Seleccionados:" Foreground="#777" FontSize="12"/>
+                    <TextBlock Text="{Binding TextoAsientosSeleccionados}" 
+                       FontSize="14" FontWeight="Bold" Foreground="#2C3E50" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Método de Pago:" Foreground="#777" FontSize="12" Margin="0,10,0,0"/>
+                    <ComboBox ItemsSource="{Binding ListaMetodosPago}" 
+                      SelectedItem="{Binding MetodoPago}"
+                      Margin="0,5,0,0" Padding="5"/>
                 </StackPanel>
 
-                <TextBlock Text="Método de Pago:" Foreground="Gray" FontWeight="SemiBold" Margin="0,10,0,5"/>
-                <ComboBox ItemsSource="{Binding ListaMetodosPago}" 
-                          SelectedItem="{Binding MetodoPago}"
-                          Height="35" VerticalContentAlignment="Center" Padding="10,0"
-                          Background="#FAFAFA" BorderBrush="#DDD">
-                    <ComboBox.ItemContainerStyle>
-                        <Style TargetType="ComboBoxItem">
-                            <Setter Property="Padding" Value="10"/>
-                        </Style>
-                    </ComboBox.ItemContainerStyle>
-                </ComboBox>
+                <StackPanel Grid.Row="2" VerticalAlignment="Bottom">
+                    <DockPanel LastChildFill="False" Margin="0,0,0,15">
+                        <TextBlock Text="TOTAL:" DockPanel.Dock="Left" FontSize="18" FontWeight="Bold" VerticalAlignment="Bottom"/>
+                        <TextBlock Text="{Binding TotalVenta, StringFormat='${0:N0}'}" DockPanel.Dock="Right" FontSize="24" FontWeight="Bold" Foreground="#27AE60"/>
+                    </DockPanel>
 
-                <Separator Margin="0,15,0,15"/>
+                    <Button Command="{Binding IniciarSeleccionCommand}" 
+                    Content="Seleccionar Asientos" 
+                    Background="#3498DB" Foreground="White"
+                    Margin="0,0,0,10" Height="40"/>
 
-                <TextBlock Text="Total a Pagar:"/>
-
-                <Separator Margin="0,10,0,20"/>
-
-                <TextBlock Text="Precio por Ticket:" Foreground="Gray" HorizontalAlignment="Center"/>
-                <TextBlock Text="{Binding FuncionSeleccionada.PrecioTicket, StringFormat='${0:N0}', TargetNullValue='$0'}" 
-                           FontSize="28" FontWeight="Bold" Foreground="#4CAF50" HorizontalAlignment="Center" Margin="0,0,0,30"/>
-
-                <Button Content="ELEGIR ASIENTOS" Command="{Binding IniciarVentaCommand}" 
-                        Height="50" FontSize="16" FontWeight="Bold" Background="#2C3E50" Foreground="White" BorderThickness="0" Cursor="Hand">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding FuncionSeleccionada}" Value="{x:Null}">
-                                    <Setter Property="IsEnabled" Value="False"/>
-                                    <Setter Property="Opacity" Value="0.5"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Button.Style>
-                </Button>
-
-                <TextBlock Text="* Seleccione una función de la lista para continuar." 
-                           Foreground="Red" FontSize="11" TextAlignment="Center" Margin="0,10,0,0" TextWrapping="Wrap">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding FuncionSeleccionada}" Value="{x:Null}">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBlock.Style>
-                </TextBlock>
-
-            </StackPanel>
+                    <Button Command="{Binding ConfirmarVentaCommand}" 
+                    Content="CONFIRMAR VENTA" 
+                    Background="#27AE60" Foreground="White" FontWeight="Bold"
+                    Height="50" FontSize="16">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Style.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.5"/>
+                                        <Setter Property="Background" Value="#95A5A6"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

@@ -8,6 +8,7 @@ namespace CapaNegocio.Interfaces
     {
         public decimal TotalEfectivo { get; set; }
         public decimal TotalTarjeta { get; set; }
+        public decimal TotalMercadoPago { get; set; } // <--- ¡NUEVA PROPIEDAD!
         public decimal TotalGeneral { get; set; }
         public int CantidadTickets { get; set; }
         public List<DetalleVentaDto> UltimasVentas { get; set; }
@@ -30,10 +31,7 @@ namespace CapaNegocio.Interfaces
 
     public interface ICN_Reporte
     {
-        // Para el arqueo diario (Cierre de Caja)
         Task<ResumenCajaDto> ObtenerArqueoDiarioAsync(DateTime fecha);
-
-        // Para gráficos y análisis
         Task<List<EstadisticaPeliculaDto>> ObtenerPeliculasMasVistasAsync(DateTime desde, DateTime hasta);
     }
 }
